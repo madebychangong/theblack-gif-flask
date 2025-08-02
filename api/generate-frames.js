@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
+const chromium = require('@sparticuz/chromium');
 
 /**
  * Vercel 서버리스 함수: GIF용 4프레임 이미지 생성
@@ -418,4 +418,5 @@ export default async function handler(req, res) {
  *   "frameCount": 4,
  *   "message": "프레임 생성 완료"
  * }
+
  */
