@@ -1,0 +1,38 @@
+{
+  "name": "theblack-shop-gif-generator",
+  "version": "3.0.0",
+  "description": "디아블로4 전문 GIF 생성기 - Netlify Functions + Client-side 합성",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy --prod",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "gif",
+    "generator",
+    "netlify",
+    "puppeteer",
+    "diablo4"
+  ],
+  "author": "The Black Shop",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer-core": "^21.5.0",
+    "chrome-aws-lambda": "^10.1.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/theblack-shop-gif"
+  },
+  "netlify": {
+    "functions": "./netlify/functions"
+  }
+}
