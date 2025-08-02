@@ -58,7 +58,7 @@ exports.handler = async (event, context) => {
     console.log('📝 받은 텍스트:', text);
 
     // 2. HTML 템플릿 읽기
-    const templatePath = path.join(process.cwd(), 'templates', 'theblackempty.html');
+    const templatePath = path.join(process.cwd(), 'theblackempty.html');
     let htmlTemplate;
     
     try {
@@ -185,4 +185,5 @@ exports.handler = async (event, context) => {
  *   "frameCount": 4,
  *   "message": "프레임 생성 완료"
  * }
+
  */
