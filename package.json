@@ -19,7 +19,7 @@
   "author": "The Black Shop",
   "license": "MIT",
   "dependencies": {
-    "puppeteer-core": "^21.5.0",
+    "puppeteer-core": "^10.4.0",
     "chrome-aws-lambda": "^10.1.0"
   },
   "devDependencies": {
@@ -35,4 +35,5 @@
   "netlify": {
     "functions": "./netlify/functions"
   }
+
 }
