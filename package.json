@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "puppeteer-core": "^19.11.1",
-    "chrome-aws-lambda": "^10.1.0"
+    "@sparticuz/chromium": "^121.0.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
@@ -35,4 +35,5 @@
   "netlify": {
     "functions": "./netlify/functions"
   }
+
 }
