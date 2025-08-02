@@ -326,9 +326,20 @@ exports.handler = async (event, context) => {
 
     console.log('🔄 텍스트 치환 완료');
 
-    // 4. Puppeteer 브라우저 시작
+    // 4. Puppeteer 브라우저 시작 (Netlify Functions 최적화)
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
       headless: chromium.headless,
