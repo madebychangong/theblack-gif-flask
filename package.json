@@ -19,8 +19,7 @@
   "author": "The Black Shop",
   "license": "MIT",
   "dependencies": {
-    "puppeteer-core": "^19.11.1",
-    "@sparticuz/chromium": "^121.0.0"
+    "cloudinary": "^1.41.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
@@ -37,3 +36,4 @@
   }
 
 }
+
