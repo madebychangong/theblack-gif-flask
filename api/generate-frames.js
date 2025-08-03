@@ -1,24 +1,31 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const { v2: cloudinary } = require('cloudinary');
 
 /**
- * Vercel 서버리스 함수: GIF용 4프레임 이미지 생성
+ * Cloudinary 기반 GIF용 4프레임 이미지 생성
  * 
  * 동작 과정:
  * 1. 사용자 텍스트 받기
- * 2. HTML 템플릿 하드코딩으로 생성
- * 3. 텍스트 치환하기
- * 4. Puppeteer로 4프레임 캡처
+ * 2. 텍스트 길이에 따라 동적 높이 계산
+ * 3. HTML 템플릿 동적 생성
+ * 4. Cloudinary API로 4프레임 생성
  * 5. Base64 이미지 배열 반환
  */
 
+// Cloudinary 설정
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
 export default async function handler(req, res) {
-  // CORS 헤더 설정 (클라이언트에서 접근 가능하게)
+  // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 
-  // OPTIONS 요청 처리 (CORS preflight)
+  // OPTIONS 요청 처리
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -27,8 +34,6 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
-
-  let browser = null;
 
   try {
     // 1. 요청 데이터 파싱
@@ -40,8 +45,24 @@ export default async function handler(req, res) {
 
     console.log('📝 받은 텍스트:', text);
 
-    // 2. HTML 템플릿 하드코딩 (수정된 디자인 적용)
-    const getTemplate = (userText) => {
+    // 2. 동적 높이 계산
+    const calculateHeight = (userText) => {
+      const lines = userText.split('\n').length;
+      const baseHeight = 600; // 제목, 버튼 등 고정 영역
+      const lineHeight = 25; // 줄당 높이
+      const padding = 100; // 여유 공간
+      
+      const calculatedHeight = baseHeight + (lines * lineHeight) + padding;
+      
+      // 최소 900px, 최대 5000px (Cloudinary 안정성 고려)
+      return Math.min(Math.max(900, calculatedHeight), 5000);
+    };
+
+    const dynamicHeight = calculateHeight(text);
+    console.log(`📏 계산된 높이: ${dynamicHeight}px`);
+
+    // 3. 동적 HTML 템플릿 생성 함수
+    const getTemplate = (userText, frameNumber, height) => {
       return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -58,7 +79,7 @@ export default async function handler(req, res) {
     
     .render-target {
       width: 720px;
-      height: 900px;
+      height: ${height}px; /* 동적 높이 */
       margin: 0;
       background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
       color: #ffffff;
@@ -227,8 +248,13 @@ export default async function handler(req, res) {
       color: #aaaaaa;
       margin: 20px 0;
       line-height: 1.6;
-      white-space: pre-wrap; /* 줄바꿈과 공백 보존 */
-      word-wrap: break-word; /* 긴 단어 자동 줄바꿈 */
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 50px; /* 텍스트가 짧아도 최소 높이 보장 */
     }
     
     /* 추가 서비스 아이콘 깜빡임 효과 */
@@ -236,40 +262,10 @@ export default async function handler(req, res) {
     .frame-2 .info-list li:nth-child(2) .icon { color: #66ff66; transform: scale(1.1); }
     .frame-3 .info-list li:nth-child(3) .icon { color: #6666ff; transform: scale(1.1); }
     .frame-4 .info-list li:nth-child(4) .icon { color: #ffff66; transform: scale(1.1); }
-    
-    /* 텍스트가 많을 때를 위한 스타일 */
-    .description.long-text {
-      font-size: 14px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    /* 스크롤바 스타일링 */
-    .description::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .description::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-    
-    .description::-webkit-scrollbar-thumb {
-      background: rgba(255, 170, 0, 0.6);
-      border-radius: 3px;
-    }
-    
-    .description::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 170, 0, 0.8);
-    }
   </style>
 </head>
 <body>
-  <div class="render-target frame-1">
+  <div class="render-target frame-${frameNumber}">
     <div>
       <h1 class="shop-title">
         THE BLACK SHOP
@@ -295,9 +291,9 @@ export default async function handler(req, res) {
       <h2 class="section-price-title">💰 실시간 가격표</h2>
     </div>
     
-    <!-- 이 부분이 사용자 텍스트로 치환됩니다 -->
+    <!-- 사용자 텍스트 영역 -->
     <div class="description">
-      ${userText}
+      ${userText.replace(/\n/g, '<br>')}
     </div>
   </div>
 </body>
@@ -306,83 +302,53 @@ export default async function handler(req, res) {
 
     console.log('✅ 템플릿 생성 완료');
 
-    // 3. 텍스트 치환 (줄바꿈을 <br>로 변환)
-    const modifiedHtml = getTemplate(text.replace(/\n/g, '<br>'));
-
-    console.log('🔄 텍스트 치환 완료');
-
-    // 4. Puppeteer 브라우저 시작 (Vercel + @sparticuz/chromium 최적화)
-    browser = await puppeteer.launch({
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-      ],
-      defaultViewport: { width: 1280, height: 720 },
-      executablePath: await chromium.executablePath(),
-      headless: 'new',
-      ignoreHTTPSErrors: true,
-    });
-
-    const page = await browser.newPage();
-    
-    // 페이지 크기 설정 (템플릿 크기에 맞춤)
-    await page.setViewport({
-      width: 720,
-      height: 900,
-      deviceScaleFactor: 1
-    });
-
-    console.log('🌐 브라우저 시작 완료');
-
-    // 5. 각 프레임별로 스크린샷 캡처
+    // 4. Cloudinary로 4프레임 생성
     const frames = [];
     
     for (let frameNumber = 1; frameNumber <= 4; frameNumber++) {
-      console.log(`📸 프레임 ${frameNumber} 캡처 중...`);
+      console.log(`📸 프레임 ${frameNumber} 생성 중...`);
       
-      // HTML에 현재 프레임 클래스 적용
-      const frameHtml = modifiedHtml.replace(
-        'render-target frame-1',
-        `render-target frame-${frameNumber}`
-      );
+      // 각 프레임별 HTML 생성
+      const frameHtml = getTemplate(text, frameNumber, dynamicHeight);
       
-      // 페이지에 HTML 로드
-      await page.setContent(frameHtml, {
-        waitUntil: 'networkidle0',  // 모든 리소스 로딩 완료까지 대기
-        timeout: 30000
-      });
-      
-      // 폰트와 스타일이 완전히 적용될 때까지 잠시 대기
-      await page.waitForTimeout(500);
-      
-      // render-target 영역만 스크린샷
-      const element = await page.$('.render-target');
-      const screenshot = await element.screenshot({
-        type: 'png',
-        encoding: 'base64'
-      });
-      
-      frames.push(`data:image/png;base64,${screenshot}`);
-      console.log(`✅ 프레임 ${frameNumber} 완료`);
+      try {
+        // Cloudinary HTML to Image API 호출
+        const response = await cloudinary.uploader.upload(
+          `data:text/html;base64,${Buffer.from(frameHtml).toString('base64')}`,
+          {
+            public_id: `theblack_frame_${frameNumber}_${Date.now()}`,
+            resource_type: 'image',
+            format: 'png',
+            width: 720,
+            height: dynamicHeight,
+            crop: 'limit', // 크기 제한 모드
+            quality: 90,
+            flags: 'immutable_cache', // 캐싱 최적화
+          }
+        );
+        
+        // Cloudinary URL을 Base64로 변환
+        const imageResponse = await fetch(response.secure_url);
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const base64Image = `data:image/png;base64,${Buffer.from(imageBuffer).toString('base64')}`;
+        
+        frames.push(base64Image);
+        console.log(`✅ 프레임 ${frameNumber} 완료 (URL: ${response.secure_url})`);
+        
+      } catch (cloudinaryError) {
+        console.error(`❌ 프레임 ${frameNumber} Cloudinary 오류:`, cloudinaryError);
+        throw new Error(`프레임 ${frameNumber} 생성 실패: ${cloudinaryError.message}`);
+      }
     }
 
-    console.log('🎉 모든 프레임 캡처 완료');
+    console.log('🎉 모든 프레임 생성 완료');
 
-    // 6. 성공 응답 반환 (Vercel 형식)
+    // 5. 성공 응답 반환
     return res.status(200).json({
       success: true,
-      frames: frames,  // Base64 이미지 배열
+      frames: frames,
       frameCount: 4,
+      dynamicHeight: dynamicHeight,
       message: '프레임 생성 완료'
     });
 
@@ -391,26 +357,20 @@ export default async function handler(req, res) {
     
     return res.status(500).json({
       success: false,
-      error: `프레임 생성 실패: ${error.message}`
+      error: `프레임 생성 실패: ${error.message}`,
+      details: error.stack
     });
-    
-  } finally {
-    // 브라우저 정리
-    if (browser) {
-      await browser.close();
-      console.log('🧹 브라우저 정리 완료');
-    }
   }
 }
 
 /**
- * Vercel Functions 사용법:
+ * 사용법:
  * 
  * POST /api/generate-frames
  * Content-Type: application/json
  * 
  * {
- *   "text": "실시간 가격표\n아이템1: 100원\n아이템2: 200원"
+ *   "text": "실시간 가격표\n아이템1: 100원\n아이템2: 200원\n..."
  * }
  * 
  * 응답:
@@ -418,6 +378,7 @@ export default async function handler(req, res) {
  *   "success": true,
  *   "frames": ["data:image/png;base64,...", ...],
  *   "frameCount": 4,
+ *   "dynamicHeight": 1500,
  *   "message": "프레임 생성 완료"
  * }
  */
