@@ -2,10 +2,10 @@ from flask import Flask, request, jsonify, send_from_directory, render_template_
 import os
 import asyncio
 import time
+import requests
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 from PIL import Image
-from supabase import create_client, Client
 
 # 환경변수 로드
 load_dotenv()
@@ -13,22 +13,41 @@ load_dotenv()
 app = Flask(__name__)
 
 # =================================
-# Supabase 설정
+# Supabase 설정 (HTTP 직접 요청)
 # =================================
 
-# Supabase 클라이언트 초기화
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://ssnmitgehgzzcpmqwhzt.supabase.co')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzbm1pdGdlaGd6emNwbXF3aHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjI1MDgsImV4cCI6MjA2ODkzODUwOH0.u3FrSDh5qYeccQmn0PkOs4nfqIhXLSFHhpWj2JXhTrA')
 
 print(f"🔗 Supabase URL: {SUPABASE_URL}")
 print(f"🔐 Supabase Key: {SUPABASE_KEY[:20]}...")
 
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    print("✅ Supabase 클라이언트 초기화 성공")
-except Exception as e:
-    print(f"❌ Supabase 클라이언트 초기화 실패: {e}")
-    supabase = None
+# Supabase Storage API 엔드포인트
+STORAGE_API_URL = f"{SUPABASE_URL}/storage/v1/object"
+BUCKET_NAME = "changong-images"
+
+def test_supabase_connection():
+    """Supabase 연결 테스트"""
+    try:
+        # Storage API 테스트
+        headers = {
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # 버킷 목록 조회로 연결 테스트
+        response = requests.get(f"{SUPABASE_URL}/storage/v1/bucket", headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ Supabase Storage 연결 성공")
+            return True
+        else:
+            print(f"❌ Supabase 연결 실패: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Supabase 연결 테스트 실패: {e}")
+        return False
 
 # =================================
 # GIF 생성 핵심 함수들
@@ -251,9 +270,9 @@ def create_gif_from_frames(frame_paths, output_gif_path, duration=800):
                 
         raise Exception(f"GIF 생성 실패: {str(e)}")
 
-def upload_gif_to_supabase(gif_file_path, retries=3):
+def upload_gif_to_supabase_http(gif_file_path, retries=3):
     """
-    GIF 파일을 Supabase Storage에 업로드하고 Public URL 반환
+    requests를 사용해 GIF 파일을 Supabase Storage에 직접 업로드
     
     Args:
         gif_file_path (str): 업로드할 GIF 파일 경로
@@ -262,62 +281,79 @@ def upload_gif_to_supabase(gif_file_path, retries=3):
     Returns:
         str: Public URL
     """
-    if not supabase:
-        raise Exception("Supabase 클라이언트가 초기화되지 않았습니다")
-    
     try:
-        print(f"📤 Supabase 업로드 시작: {os.path.basename(gif_file_path)}")
+        print(f"📤 Supabase HTTP 업로드 시작: {os.path.basename(gif_file_path)}")
         
         # 1. 파일 존재 확인
         if not os.path.exists(gif_file_path):
             raise Exception(f"업로드할 파일이 존재하지 않습니다: {gif_file_path}")
         
-        # 2. 고유한 파일명 생성 (원본명)
-        unique_filename = "bg1.gif"
+        # 2. 고정 파일명 사용 (덮어쓰기)
+        filename = "bg1.gif"
         
         # 3. 파일 읽기
         with open(gif_file_path, 'rb') as file:
             file_data = file.read()
         
         file_size = len(file_data)
-        print(f"📦 업로드 준비: {unique_filename} ({file_size} bytes)")
+        print(f"📦 업로드 준비: {filename} ({file_size} bytes)")
         
-        # 4. 재시도 로직으로 업로드
+        # 4. HTTP 헤더 설정
+        headers = {
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'image/gif',
+            'Cache-Control': '3600'
+        }
+        
+        # 5. 재시도 로직으로 업로드
         last_error = None
         for attempt in range(1, retries + 1):
             try:
-                print(f"🔄 업로드 시도 {attempt}/{retries}")
+                print(f"🔄 HTTP 업로드 시도 {attempt}/{retries}")
                 
                 # 기존 파일 삭제 시도 (덮어쓰기 준비)
+                delete_url = f"{STORAGE_API_URL}/{BUCKET_NAME}/{filename}"
                 try:
-                    supabase.storage.from_('changong-images').remove([unique_filename])
+                    delete_response = requests.delete(delete_url, headers=headers, timeout=30)
+                    print(f"🗑️  기존 파일 삭제 시도: {delete_response.status_code}")
                 except:
                     pass  # 파일이 없으면 무시
                 
-                # 파일 업로드
-                result = supabase.storage.from_('changong-images').upload(
-                    unique_filename,
-                    file_data,
-                    {
-                        'content-type': 'image/gif',
-                        'cache-control': '3600',
-                        'upsert': 'true'
-                    }
+                # 6. 새 파일 업로드
+                upload_url = f"{STORAGE_API_URL}/{BUCKET_NAME}/{filename}"
+                
+                upload_response = requests.post(
+                    upload_url,
+                    headers=headers,
+                    data=file_data,
+                    timeout=60
                 )
                 
-                print(f"✅ 업로드 성공 (시도 {attempt})")
+                print(f"📤 업로드 응답: {upload_response.status_code}")
                 
-                # 5. Public URL 생성
-                public_url_response = supabase.storage.from_('changong-images').get_public_url(unique_filename)
-                public_url = public_url_response
-                
-                if not public_url:
-                    raise Exception("Public URL 생성 실패")
-                
-                print(f"🌐 Public URL 생성: {public_url}")
-                
-                return public_url
-                
+                if upload_response.status_code in [200, 201]:
+                    print(f"✅ 업로드 성공 (시도 {attempt})")
+                    
+                    # 7. Public URL 생성
+                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{filename}"
+                    
+                    print(f"🌐 Public URL 생성: {public_url}")
+                    
+                    # 8. URL 접근 가능성 확인
+                    try:
+                        verify_response = requests.head(public_url, timeout=10)
+                        if verify_response.status_code == 200:
+                            print("✅ Public URL 접근 확인 완료")
+                        else:
+                            print(f"⚠️  Public URL 접근 확인 실패: {verify_response.status_code}")
+                    except:
+                        print("⚠️  Public URL 확인 건너뜀")
+                    
+                    return public_url
+                    
+                else:
+                    raise Exception(f"업로드 실패: HTTP {upload_response.status_code} - {upload_response.text}")
+                    
             except Exception as attempt_error:
                 last_error = attempt_error
                 print(f"❌ 업로드 시도 {attempt} 실패: {str(attempt_error)}")
@@ -331,11 +367,11 @@ def upload_gif_to_supabase(gif_file_path, retries=3):
         raise Exception(f"{retries}번 시도 후 업로드 실패: {str(last_error)}")
         
     except Exception as e:
-        raise Exception(f"Supabase 업로드 실패: {str(e)}")
+        raise Exception(f"Supabase HTTP 업로드 실패: {str(e)}")
 
 def generate_complete_gif_with_upload(text):
     """
-    전체 GIF 생성 + Supabase 업로드 통합 프로세스
+    전체 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
     
     Args:
         text (str): 사용자 입력 텍스트
@@ -347,7 +383,7 @@ def generate_complete_gif_with_upload(text):
     local_gif_path = None
     
     try:
-        print(f"🎬 완전한 GIF 생성 + 업로드 시작: {text[:30]}...")
+        print(f"🎬 완전한 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
         
         # temp 폴더 확인
         temp_dir = os.path.join(os.getcwd(), 'temp')
@@ -383,9 +419,9 @@ def generate_complete_gif_with_upload(text):
         create_gif_from_frames(frame_paths, local_gif_path, duration=800)
         local_gif_size = os.path.getsize(local_gif_path)
         
-        # 3단계: Supabase 업로드
-        print("📤 Supabase 업로드 시작...")
-        public_url = upload_gif_to_supabase(local_gif_path)
+        # 3단계: Supabase HTTP 업로드
+        print("📤 Supabase HTTP 업로드 시작...")
+        public_url = upload_gif_to_supabase_http(local_gif_path)
         
         # 4단계: 결과 정보 수집
         result = {
@@ -398,18 +434,18 @@ def generate_complete_gif_with_upload(text):
             'total_duration': 800 * 4,
             'loop_count': 'infinite',
             'upload_success': True,
-            'filename': gif_filename
+            'filename': 'bg1.gif'
         }
         
-        print(f"🎉 GIF 생성 + 업로드 완전 성공!")
+        print(f"🎉 GIF 생성 + HTTP 업로드 완전 성공!")
         print(f"🌐 Public URL: {public_url}")
         
         return result
         
     except Exception as e:
-        print(f"❌ GIF 생성 + 업로드 실패: {str(e)}")
+        print(f"❌ GIF 생성 + HTTP 업로드 실패: {str(e)}")
         
-        raise Exception(f"완전한 GIF 생성 + 업로드 실패: {str(e)}")
+        raise Exception(f"완전한 GIF 생성 + HTTP 업로드 실패: {str(e)}")
     
     finally:
         # 임시 프레임 파일들 정리
@@ -421,14 +457,6 @@ def generate_complete_gif_with_upload(text):
                     print(f"🗑️  정리: {os.path.basename(temp_file)}")
             except Exception as cleanup_error:
                 print(f"⚠️  정리 실패: {temp_file} - {cleanup_error}")
-        
-        # 로컬 GIF 파일도 정리 (선택적)
-        # if local_gif_path and os.path.exists(local_gif_path):
-        #     try:
-        #         os.remove(local_gif_path)
-        #         print(f"🗑️  로컬 GIF 정리: {os.path.basename(local_gif_path)}")
-        #     except:
-        #         pass
 
 # =================================
 # Flask 라우트들
@@ -451,23 +479,26 @@ def static_files(filename):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """서버 상태 확인 API"""
+    supabase_connected = test_supabase_connection()
+    
     return jsonify({
         'status': 'OK',
         'message': 'THE BLACK GIF Generator 서버가 정상 작동 중입니다!',
-        'version': '4.0.0',
+        'version': '5.0.0',
         'functions': [
             'render_template_to_html', 
             'capture_frame_with_playwright',
             'create_gif_from_frames',
-            'upload_gif_to_supabase',
+            'upload_gif_to_supabase_http',
             'generate_complete_gif_with_upload'
         ],
-        'supabase_connected': supabase is not None
+        'supabase_connected': supabase_connected,
+        'dependencies': 'greenlet-free (requests only)'
     })
 
 @app.route('/api/generate-gif', methods=['POST'])
 def generate_gif_api():
-    """GIF 생성 API - Supabase 업로드 포함 완전한 기능"""
+    """GIF 생성 API - Supabase HTTP 업로드 포함 완전한 기능"""
     try:
         data = request.get_json()
         text = data.get('text', '')
@@ -478,16 +509,10 @@ def generate_gif_api():
                 'error': '텍스트를 입력해주세요.'
             }), 400
         
-        if not supabase:
-            return jsonify({
-                'success': False,
-                'error': 'Supabase 연결이 설정되지 않았습니다.'
-            }), 500
-        
-        print(f"🎬 GIF 생성 + 업로드 요청: {text[:50]}...")
+        print(f"🎬 GIF 생성 + HTTP 업로드 요청: {text[:50]}...")
         
         try:
-            # 완전한 GIF 생성 + 업로드 실행
+            # 완전한 GIF 생성 + HTTP 업로드 실행
             result = generate_complete_gif_with_upload(text)
             
             # 성공 응답
@@ -502,7 +527,8 @@ def generate_gif_api():
                     'duration_per_frame': f"{result['duration_per_frame']}ms",
                     'total_duration': f"{result['total_duration']}ms",
                     'loop': result['loop_count'],
-                    'uploaded_to_supabase': result['upload_success']
+                    'uploaded_to_supabase': result['upload_success'],
+                    'method': 'HTTP requests (greenlet-free)'
                 }
             })
             
@@ -534,7 +560,7 @@ if __name__ == '__main__':
     print("📝 템플릿 파일: templates 폴더")
     print("🎭 Playwright: 브라우저 자동화 준비")
     print("🎨 Pillow: 이미지 처리 준비")
-    print("📤 Supabase: 파일 업로드 준비")
+    print("📤 Supabase: HTTP 직접 업로드 (greenlet-free)")
     
     # 기본적인 폴더 확인
     temp_dir = os.path.join(os.getcwd(), 'temp')
@@ -544,7 +570,14 @@ if __name__ == '__main__':
     else:
         print(f"📁 temp 폴더 확인: {temp_dir}")
     
+    # Supabase 연결 테스트
+    print("🔍 Supabase 연결 테스트...")
+    if test_supabase_connection():
+        print("✅ Supabase 연결 확인 완료")
+    else:
+        print("⚠️  Supabase 연결 문제 (서버는 계속 실행)")
+    
     print("✅ Flask 개발 서버 실행 중...")
-    print("🎉 완전한 GIF 생성 + Supabase 업로드 기능 준비 완료!")
+    print("🎉 완전한 GIF 생성 + HTTP 업로드 기능 준비 완료 (greenlet-free)!")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
