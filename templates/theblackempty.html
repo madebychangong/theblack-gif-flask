@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>더블랙샵 GIF 버전</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #000000;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans KR', Arial, sans-serif;
+    }
+    
+    .render-target {
+      width: 720px;
+      min-height: 900px;
+      margin: 0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+      color: #ffffff;
+      padding: 30px;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .shop-title {
+      font-size: 50px;
+      font-weight: 800;
+      text-align: center;
+      margin: 15px 0;
+      letter-spacing: 2px;
+      transition: all 0.5s ease;
+    }
+    
+    /* 제목 자연스러운 그라데이션 흐르는 효과 */
+    .frame-1 .shop-title {
+      background: linear-gradient(45deg, #ffd700, #ffb347, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .frame-2 .shop-title {
+      background: linear-gradient(90deg, #ffb347, #ff8c00, #ff6347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .frame-3 .shop-title {
+      background: linear-gradient(135deg, #ff8c00, #ff6347, #ff4500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .frame-4 .shop-title {
+      background: linear-gradient(180deg, #ff6347, #ff4500, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .icon {
+      display: inline-block;
+      margin: 0 10px;
+      font-size: 32px;
+      transform: scale(1.0);
+      transition: all 0.5s ease;
+    }
+    
+    .shop-subtitle {
+      text-align: center;
+      font-size: 18px;
+      color: #cccccc;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle-divider {
+      border: none;
+      border-top: 1px solid #444444;
+      margin: 15px auto;
+      width: 80%;
+    }
+    
+    .info-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      text-align: center;
+    }
+    
+    .info-list li {
+      font-size: 18px;
+      margin: 10px 0;
+      color: #ffffff;
+      text-align: center;
+    }
+    
+    .info-list .icon {
+      margin-right: 15px;
+      font-size: 24px;
+      transform: scale(1.0);
+    }
+    
+    .cta-btn {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 18px 35px;
+      margin: 20px auto;
+      border-radius: 15px;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
+      max-width: 400px;
+    }
+    
+    /* 오픈채팅 버튼 부드러운 그라데이션 흐르는 효과 */
+    .frame-1 .cta-btn {
+      background: linear-gradient(45deg, #4169e1, #6a5acd, #8a2be2);
+      border-color: #4169e1;
+      box-shadow: 0 0 20px rgba(65, 105, 225, 0.4);
+    }
+    
+    .frame-2 .cta-btn {
+      background: linear-gradient(90deg, #6a5acd, #8a2be2, #9370db);
+      border-color: #6a5acd;
+      box-shadow: 0 0 22px rgba(106, 90, 205, 0.5);
+    }
+    
+    .frame-3 .cta-btn {
+      background: linear-gradient(135deg, #8a2be2, #9370db, #ba55d3);
+      border-color: #8a2be2;
+      box-shadow: 0 0 25px rgba(138, 43, 226, 0.6);
+    }
+    
+    .frame-4 .cta-btn {
+      background: linear-gradient(180deg, #9370db, #ba55d3, #4169e1);
+      border-color: #9370db;
+      box-shadow: 0 0 22px rgba(147, 112, 219, 0.5);
+    }
+    
+    .divider {
+      border: none;
+      border-top: 2px solid #444444;
+      margin: 25px auto;
+      width: 90%;
+    }
+    
+    .section-price-title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffaa00;
+      margin: 20px 0;
+      transition: all 0.5s ease;
+    }
+    
+    .frame-1 .section-price-title { 
+      color: #ffaa00; 
+      text-shadow: 0 0 15px rgba(255, 170, 0, 0.7);
+    }
+    .frame-2 .section-price-title { 
+      color: #ff6600; 
+      text-shadow: 0 0 18px rgba(255, 102, 0, 0.8);
+    }
+    .frame-3 .section-price-title { 
+      color: #ff0066; 
+      text-shadow: 0 0 20px rgba(255, 0, 102, 0.9);
+    }
+    .frame-4 .section-price-title { 
+      color: #ffaa00; 
+      text-shadow: 0 0 15px rgba(255, 170, 0, 0.7);
+    }
+    
+    .user-content {
+      text-align: center;
+      font-size: 16px;
+      color: #ffffff;
+      margin: 15px 0;
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      border: none;
+    }
+    
+    /* 아이콘 깜빡임 효과 - 모든 프레임에서 동일한 크기 유지 */
+    .frame-1 .info-list li:nth-child(1) .icon { 
+      color: #ff6666; 
+      transform: scale(1.0);
+    }
+    .frame-2 .info-list li:nth-child(2) .icon { 
+      color: #66ff66; 
+      transform: scale(1.0);
+    }
+    .frame-3 .info-list li:nth-child(3) .icon { 
+      color: #6666ff; 
+      transform: scale(1.0);
+    }
+    .frame-4 .info-list li:nth-child(4) .icon { 
+      color: #ffff66; 
+      transform: scale(1.0);
+    }
+  </style>
+</head>
+<body>
+  <div class="render-target {{frame_class}}">
+    <div>
+      <h1 class="shop-title">
+        <span class="icon">🦇</span> THE BLACK SHOP <span class="icon">🧛‍♂️</span>
+      </h1>
+      <div class="shop-subtitle">디아블로4 시즌9 버스 · 대리 · 아이템 전문 거래소</div>
+      <hr class="subtitle-divider">
+    </div>
+    
+    <ul class="info-list">
+      <li><span class="icon">🦾</span>모든 장비, 아이템, 재료 완비</li>
+      <li><span class="icon">🚌</span>버스, 대리, 세팅 풀 지원</li>
+      <li><span class="icon">🦸‍♂️</span>경험 많은 전문 기사 상시 대기</li>
+      <li><span class="icon">🔥</span>합리적인 실시간 최저가 보장</li>
+    </ul>
+    
+    <div class="cta-btn">
+      💬 오픈채팅은 가격표 클릭!
+    </div>
+    
+    <hr class="divider">
+    
+    <div>
+      <h2 class="section-price-title">💰 실시간 가격표</h2>
+    </div>
+    
+    <div class="user-content">
+      {{text|safe}}
+    </div>
+  </div>
+</body>
+</html>
