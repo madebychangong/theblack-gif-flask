@@ -3,6 +3,7 @@ import os
 import asyncio
 import time
 import requests
+import gc  # 🔧 Leapcell: 메모리 정리용 추가
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 from PIL import Image
@@ -105,13 +106,23 @@ async def capture_frame_with_playwright(html_content, output_path):
         
         # 1. Playwright 브라우저 실행
         async with async_playwright() as p:
+            # 🔧 Leapcell: 브라우저 args 강화
             browser = await p.chromium.launch(
                 headless=True,
                 args=[
                     '--no-sandbox', 
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
-                    '--disable-gpu'
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-plugins',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--disable-features=TranslateUI',
+                    '--disable-web-security',
+                    '--no-first-run',
+                    '--single-process'  # Serverless 환경용
                 ]
             )
             
@@ -369,6 +380,12 @@ def upload_gif_to_supabase_http(gif_file_path, retries=3):
     except Exception as e:
         raise Exception(f"Supabase HTTP 업로드 실패: {str(e)}")
 
+# 🔧 Leapcell: 메모리 정리 함수 추가
+def cleanup_memory():
+    """메모리 정리 함수 (Leapcell serverless 환경용)"""
+    gc.collect()  # 가비지 컬렉션 강제 실행
+    print("🧹 메모리 정리 완료")
+
 def generate_complete_gif_with_upload(text):
     """
     전체 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
@@ -457,6 +474,9 @@ def generate_complete_gif_with_upload(text):
                     print(f"🗑️  정리: {os.path.basename(temp_file)}")
             except Exception as cleanup_error:
                 print(f"⚠️  정리 실패: {temp_file} - {cleanup_error}")
+        
+        # 🔧 Leapcell: 메모리 정리 추가
+        cleanup_memory()
 
 # =================================
 # Flask 라우트들
@@ -493,7 +513,8 @@ def health_check():
             'generate_complete_gif_with_upload'
         ],
         'supabase_connected': supabase_connected,
-        'dependencies': 'greenlet-free (requests only)'
+        'dependencies': 'greenlet-free (requests only)',
+        'platform': 'Leapcell Serverless'  # 🔧 추가
     })
 
 @app.route('/api/generate-gif', methods=['POST'])
@@ -528,7 +549,8 @@ def generate_gif_api():
                     'total_duration': f"{result['total_duration']}ms",
                     'loop': result['loop_count'],
                     'uploaded_to_supabase': result['upload_success'],
-                    'method': 'HTTP requests (greenlet-free)'
+                    'method': 'HTTP requests (greenlet-free)',
+                    'platform': 'Leapcell Serverless'  # 🔧 추가
                 }
             })
             
@@ -553,14 +575,19 @@ def serve_temp_file(filename):
     except:
         return "파일을 찾을 수 없습니다.", 404
 
+# 🔧 Leapcell: Flask 실행 부분 완전 수정
 if __name__ == '__main__':
+    # 환경변수에서 포트 읽기 (Leapcell용)
+    port = int(os.getenv('PORT', 5000))
+    
     print("🚀 THE BLACK GIF Generator 서버 시작!")
-    print("📡 접속 주소: http://localhost:5000")
+    print(f"📡 포트: {port}")
     print("📁 정적 파일: static 폴더")
     print("📝 템플릿 파일: templates 폴더")
     print("🎭 Playwright: 브라우저 자동화 준비")
     print("🎨 Pillow: 이미지 처리 준비")
     print("📤 Supabase: HTTP 직접 업로드 (greenlet-free)")
+    print("🌐 Leapcell 서버리스 환경 최적화")
     
     # 기본적인 폴더 확인
     temp_dir = os.path.join(os.getcwd(), 'temp')
@@ -577,7 +604,12 @@ if __name__ == '__main__':
     else:
         print("⚠️  Supabase 연결 문제 (서버는 계속 실행)")
     
-    print("✅ Flask 개발 서버 실행 중...")
-    print("🎉 완전한 GIF 생성 + HTTP 업로드 기능 준비 완료 (greenlet-free)!")
+    print("✅ Flask 서버 실행 중...")
+    print("🎉 완전한 GIF 생성 + HTTP 업로드 기능 준비 완료!")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Leapcell 환경 맞춤 실행
+    app.run(
+        debug=False,  # 🔧 Production 모드
+        host='0.0.0.0',  # 모든 IP에서 접근 가능
+        port=port  # 🔧 동적 포트
+    )
