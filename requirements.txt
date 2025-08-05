@@ -1,6 +1,18 @@
+# 기존 패키지들
 Flask==3.0.0
 playwright==1.44.0
 Pillow==10.4.0
 requests==2.31.0
 python-dotenv==1.0.1
+
+# Leapcell 배포용 웹서버
 gunicorn==21.2.0
+
+# Leapcell serverless 환경 최적화
+psutil==5.9.6
+
+# Playwright 브라우저 의존성 (Leapcell용)
+asyncio==3.4.3
+
+# 메모리 사용량 최적화
+gc-python-utils==1.0.1
