@@ -403,9 +403,7 @@ def generate_complete_gif_with_upload(text):
         print(f"🎬 완전한 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
         
         # temp 폴더 확인
-        temp_dir = os.path.join(os.getcwd(), 'temp')
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
+        temp_dir = '/tmp'
         
         timestamp = int(time.time())
         frame_paths = []
@@ -613,3 +611,4 @@ if __name__ == '__main__':
         host='0.0.0.0',  # 모든 IP에서 접근 가능
         port=port  # 🔧 동적 포트
     )
+
