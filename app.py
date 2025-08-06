@@ -206,32 +206,34 @@ def sync_capture_animation(html_content, frame_count=20, frame_interval=150):
     except Exception as e:
         raise Exception(f"동기 캡처 실행 실패: {str(e)}")
 
-def create_gif_from_frames(images, output_gif_path, duration=100):
+def create_gif_from_frames_in_memory(images, duration=100):
     """
-    여러 PIL Image 객체들을 하나의 애니메이션 GIF로 합성
-    (20프레임 지원으로 업그레이드)
+    🚀 메모리에서만 작업: PIL Image 객체들을 메모리상에서 GIF로 합성
+    파일 시스템을 전혀 사용하지 않는 완전 메모리 기반 처리
     
     Args:
         images (list): PIL Image 객체들의 리스트
-        output_gif_path (str): 생성될 GIF 파일 경로
         duration (int): 각 프레임 지속 시간 (밀리초, 기본값: 100ms)
     
     Returns:
-        str: 생성된 GIF 파일 경로
+        bytes: GIF 바이트 데이터
     """
     try:
-        print(f"🎨 {len(images)}개 프레임으로 GIF 생성 시작: {os.path.basename(output_gif_path)}")
+        print(f"🎨 메모리에서 {len(images)}개 프레임으로 GIF 생성 시작")
         
         if len(images) < 2:
             raise Exception(f"최소 2개의 프레임이 필요하지만 {len(images)}개만 있습니다")
         
-        # 첫 번째 이미지를 기준으로 GIF 생성
+        # 메모리 버퍼 생성
+        gif_buffer = io.BytesIO()
+        
+        # 첫 번째 이미지를 기준으로 GIF 생성 (메모리에서!)
         first_image = images[0]
         other_images = images[1:]
         
-        # GIF로 저장
+        # GIF를 메모리 버퍼에 저장
         first_image.save(
-            output_gif_path,
+            gif_buffer,
             save_all=True,
             append_images=other_images,
             duration=duration,  # 각 프레임 지속 시간 (ms)
@@ -240,61 +242,51 @@ def create_gif_from_frames(images, output_gif_path, duration=100):
             format='GIF'
         )
         
-        # 생성된 파일 확인
-        if not os.path.exists(output_gif_path):
-            raise Exception("GIF 파일이 생성되지 않았습니다")
+        # 버퍼에서 바이트 데이터 추출
+        gif_bytes = gif_buffer.getvalue()
+        gif_buffer.close()
         
-        file_size = os.path.getsize(output_gif_path)
         total_duration = len(images) * duration
-        print(f"✅ GIF 생성 완료: {os.path.basename(output_gif_path)} ({file_size} bytes)")
+        print(f"✅ 메모리 GIF 생성 완료: {len(gif_bytes)} bytes")
         print(f"🎬 총 {len(images)}프레임, {total_duration}ms 재생시간")
         
-        return output_gif_path
+        return gif_bytes
         
     except Exception as e:
-        # 실패한 GIF 파일 정리
-        if os.path.exists(output_gif_path):
-            try:
-                os.remove(output_gif_path)
-            except:
-                pass
-                
-        raise Exception(f"GIF 생성 실패: {str(e)}")
+        raise Exception(f"메모리 GIF 생성 실패: {str(e)}")
 
-def upload_gif_to_supabase_http(gif_file_path, retries=3):
+def upload_gif_bytes_to_supabase(gif_bytes, retries=3):
     """
-    requests를 사용해 GIF 파일을 Supabase Storage에 직접 업로드
-    (기존과 동일 - 변경 없음)
+    🚀 메모리의 GIF 바이트 데이터를 직접 Supabase Storage에 업로드
+    파일을 디스크에 저장하지 않고 메모리에서 바로 업로드
+    
+    Args:
+        gif_bytes (bytes): GIF 바이트 데이터
+        retries (int): 실패시 재시도 횟수
+    
+    Returns:
+        str: Public URL
     """
     try:
-        print(f"📤 Supabase HTTP 업로드 시작: {os.path.basename(gif_file_path)}")
+        print(f"📤 메모리 GIF 바이트를 Supabase에 직접 업로드: {len(gif_bytes)} bytes")
         
-        # 1. 파일 존재 확인
-        if not os.path.exists(gif_file_path):
-            raise Exception(f"업로드할 파일이 존재하지 않습니다: {gif_file_path}")
-        
-        # 2. 고정 파일명 사용 (덮어쓰기)
+        # 고정 파일명 사용 (덮어쓰기)
         filename = "bg1.gif"
         
-        # 3. 파일 읽기
-        with open(gif_file_path, 'rb') as file:
-            file_data = file.read()
+        print(f"📦 업로드 준비: {filename} ({len(gif_bytes)} bytes)")
         
-        file_size = len(file_data)
-        print(f"📦 업로드 준비: {filename} ({file_size} bytes)")
-        
-        # 4. HTTP 헤더 설정
+        # HTTP 헤더 설정
         headers = {
             'Authorization': f'Bearer {SUPABASE_KEY}',
             'Content-Type': 'image/gif',
             'Cache-Control': '3600'
         }
         
-        # 5. 재시도 로직으로 업로드
+        # 재시도 로직으로 업로드
         last_error = None
         for attempt in range(1, retries + 1):
             try:
-                print(f"🔄 HTTP 업로드 시도 {attempt}/{retries}")
+                print(f"🔄 메모리 직접 업로드 시도 {attempt}/{retries}")
                 
                 # 기존 파일 삭제 시도 (덮어쓰기 준비)
                 delete_url = f"{STORAGE_API_URL}/{BUCKET_NAME}/{filename}"
@@ -304,22 +296,22 @@ def upload_gif_to_supabase_http(gif_file_path, retries=3):
                 except:
                     pass  # 파일이 없으면 무시
                 
-                # 6. 새 파일 업로드
+                # 새 파일 업로드 (메모리 바이트 직접 전송)
                 upload_url = f"{STORAGE_API_URL}/{BUCKET_NAME}/{filename}"
                 
                 upload_response = requests.post(
                     upload_url,
                     headers=headers,
-                    data=file_data,
+                    data=gif_bytes,  # 🚀 메모리 바이트 직접 전송
                     timeout=60
                 )
                 
                 print(f"📤 업로드 응답: {upload_response.status_code}")
                 
                 if upload_response.status_code in [200, 201]:
-                    print(f"✅ 업로드 성공 (시도 {attempt})")
+                    print(f"✅ 메모리 직접 업로드 성공 (시도 {attempt})")
                     
-                    # 7. Public URL 생성
+                    # Public URL 생성
                     public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{filename}"
                     
                     print(f"🌐 Public URL 생성: {public_url}")
@@ -341,7 +333,7 @@ def upload_gif_to_supabase_http(gif_file_path, retries=3):
         raise Exception(f"{retries}번 시도 후 업로드 실패: {str(last_error)}")
         
     except Exception as e:
-        raise Exception(f"Supabase HTTP 업로드 실패: {str(e)}")
+        raise Exception(f"메모리 직접 업로드 실패: {str(e)}")
 
 # 🔧 Leapcell: 메모리 정리 함수 추가
 def cleanup_memory():
@@ -351,8 +343,8 @@ def cleanup_memory():
 
 def generate_complete_gif_with_upload(text, frame_count=20, frame_interval=150):
     """
-    🚀 완전히 개선된 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
-    브라우저 1개로 연속 캡처 방식 사용
+    🚀 완전 메모리 기반 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
+    파일 시스템을 전혀 사용하지 않는 완전 메모리 처리
     
     Args:
         text (str): 사용자 입력 텍스트
@@ -363,63 +355,52 @@ def generate_complete_gif_with_upload(text, frame_count=20, frame_interval=150):
         dict: 생성 및 업로드 결과 정보
     """
     images = []  # 정리할 이미지들
-    local_gif_path = None
     
     try:
-        print(f"🎬 브라우저 1개 방식으로 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
+        print(f"🎬 완전 메모리 기반 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
         
-        # temp 폴더 확인
-        temp_dir = os.path.join(os.getcwd(), 'temp')
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        
-        timestamp = int(time.time())
-        
-        # 1단계: HTML 템플릿 생성 (1번만!)
+        # 1단계: HTML 템플릿 생성
         print("📝 쇼핑몰형 HTML 템플릿 생성...")
         html_content = render_template_to_html(text)
         
-        # 2단계: 🚀 브라우저 1개로 연속 캡처
+        # 2단계: 🚀 브라우저 1개로 연속 캡처 (메모리에서만)
         print(f"🎨 브라우저 1개로 {frame_count}개 프레임 연속 캡처...")
         images = sync_capture_animation(html_content, frame_count, frame_interval)
         
-        # 3단계: GIF 합성
-        print(f"🎬 {len(images)}개 프레임을 GIF로 합성...")
-        gif_filename = f"theblack_shop_gif_{timestamp}.gif"
-        local_gif_path = os.path.join(temp_dir, gif_filename)
+        # 3단계: 🚀 메모리에서 GIF 생성 (파일 시스템 사용 안 함)
+        print(f"🎬 메모리에서 {len(images)}개 프레임을 GIF로 합성...")
+        gif_bytes = create_gif_from_frames_in_memory(images, duration=frame_interval)
+        gif_size = len(gif_bytes)
         
-        create_gif_from_frames(images, local_gif_path, duration=frame_interval)
-        local_gif_size = os.path.getsize(local_gif_path)
-        
-        # 4단계: Supabase HTTP 업로드
-        print("📤 Supabase HTTP 업로드 시작...")
-        public_url = upload_gif_to_supabase_http(local_gif_path)
+        # 4단계: 🚀 메모리 바이트를 직접 Supabase 업로드
+        print("📤 메모리 GIF 바이트를 Supabase에 직접 업로드...")
+        public_url = upload_gif_bytes_to_supabase(gif_bytes)
         
         # 5단계: 결과 정보 수집
         total_duration = len(images) * frame_interval
         result = {
             'success': True,
             'public_url': public_url,
-            'local_path': local_gif_path,
-            'gif_size': local_gif_size,
+            'gif_size': gif_size,
             'frames_generated': len(images),
             'duration_per_frame': frame_interval,
             'total_duration': total_duration,
             'loop_count': 'infinite',
             'upload_success': True,
             'filename': 'bg1.gif',
-            'capture_method': 'browser_1x_continuous',  # 🚀 새로운 방식 표시
-            'animation_type': 'css_pulse_wave'  # 펄스 파도 애니메이션
+            'capture_method': 'browser_1x_continuous',
+            'animation_type': 'css_pulse_wave',
+            'processing_method': 'full_memory_based'  # 🚀 완전 메모리 처리 표시
         }
         
-        print(f"🎉 브라우저 1개 방식 GIF 생성 + HTTP 업로드 완전 성공!")
+        print(f"🎉 완전 메모리 기반 GIF 생성 + HTTP 업로드 성공!")
         print(f"🌐 Public URL: {public_url}")
-        print(f"📊 {len(images)}프레임, {total_duration}ms, {local_gif_size} bytes")
+        print(f"📊 {len(images)}프레임, {total_duration}ms, {gif_size} bytes")
         
         return result
         
     except Exception as e:
-        print(f"❌ 브라우저 1개 방식 GIF 생성 + HTTP 업로드 실패: {str(e)}")
+        print(f"❌ 완전 메모리 기반 GIF 생성 + HTTP 업로드 실패: {str(e)}")
         raise Exception(f"완전한 GIF 생성 + HTTP 업로드 실패: {str(e)}")
     
     finally:
@@ -430,14 +411,6 @@ def generate_complete_gif_with_upload(text, frame_count=20, frame_interval=150):
                 img.close()
             except Exception as cleanup_error:
                 print(f"⚠️  이미지 정리 실패: {cleanup_error}")
-        
-        # 로컬 GIF 파일 정리 (선택사항)
-        if local_gif_path and os.path.exists(local_gif_path):
-            try:
-                os.remove(local_gif_path)
-                print(f"🗑️  로컬 GIF 파일 정리: {os.path.basename(local_gif_path)}")
-            except Exception as cleanup_error:
-                print(f"⚠️  로컬 파일 정리 실패: {cleanup_error}")
         
         # 🔧 Leapcell: 메모리 정리 추가
         cleanup_memory()
@@ -468,20 +441,21 @@ def health_check():
     return jsonify({
         'status': 'OK',
         'message': 'THE BLACK SHOP GIF Generator 서버가 정상 작동 중입니다!',
-        'version': '6.0.0',  # 🚀 업그레이드 버전
+        'version': '7.0.0',  # 🚀 완전 메모리 처리 업그레이드
         'functions': [
             'render_template_to_html', 
-            'capture_animation_frames',  # 🚀 새로운 함수
-            'sync_capture_animation',    # 🚀 새로운 함수
-            'create_gif_from_frames',
-            'upload_gif_to_supabase_http',
+            'capture_animation_frames',        # 🚀 브라우저 1개 연속 캡처
+            'sync_capture_animation',          # 🚀 동기 래퍼
+            'create_gif_from_frames_in_memory', # 🚀 메모리 GIF 생성
+            'upload_gif_bytes_to_supabase',    # 🚀 메모리 직접 업로드
             'generate_complete_gif_with_upload'
         ],
         'supabase_connected': supabase_connected,
         'dependencies': 'greenlet-free (requests only)',
         'platform': 'Leapcell Serverless',
-        'capture_method': 'browser_1x_continuous',  # 🚀 새로운 방식
-        'animation_support': 'css_pulse_wave_20fps'  # 🚀 20프레임 지원
+        'capture_method': 'browser_1x_continuous_memory',  # 🚀 완전 메모리 처리
+        'animation_support': 'css_pulse_wave_20fps',       # 🚀 20프레임 지원
+        'file_system': 'memory_only_no_disk'               # 🚀 디스크 사용 안 함
     })
 
 @app.route('/api/generate-gif', methods=['POST'])
@@ -521,8 +495,9 @@ def generate_gif_api():
                     'total_duration': f"{result['total_duration']}ms",
                     'loop': result['loop_count'],
                     'uploaded_to_supabase': result['upload_success'],
-                    'method': result['capture_method'],  # 🚀 브라우저 1개 방식 표시
-                    'animation_type': result['animation_type'],  # 🚀 CSS 펄스 애니메이션
+                    'method': result['capture_method'],        # 🚀 브라우저 1개 방식 표시
+                    'animation_type': result['animation_type'], # 🚀 CSS 펄스 애니메이션
+                    'processing': result['processing_method'],  # 🚀 완전 메모리 처리
                     'platform': 'Leapcell Serverless'
                 }
             })
@@ -553,23 +528,16 @@ if __name__ == '__main__':
     # 환경변수에서 포트 읽기 (Leapcell용)
     port = int(os.getenv('PORT', 5000))
     
-    print("🚀 THE BLACK SHOP GIF Generator 서버 시작! (브라우저 1개 방식)")
+    print("🚀 THE BLACK SHOP GIF Generator 서버 시작! (완전 메모리 처리)")
     print(f"📡 포트: {port}")
     print("📁 정적 파일: static 폴더")
     print("📝 템플릿 파일: templates 폴더")
     print("🎭 Playwright: 브라우저 1개 연속 캡처 준비")
-    print("🎨 Pillow: 20프레임 이미지 처리 준비")
-    print("📤 Supabase: HTTP 직접 업로드 (greenlet-free)")
+    print("🎨 Pillow: 20프레임 메모리 이미지 처리 준비")
+    print("📤 Supabase: 메모리 바이트 직접 업로드 (greenlet-free)")
     print("🌊 CSS 펄스 파도 애니메이션 지원")
+    print("💾 완전 메모리 기반 처리 (디스크 사용 안 함)")
     print("🌐 Leapcell 서버리스 환경 최적화")
-    
-    # 기본적인 폴더 확인
-    temp_dir = os.path.join(os.getcwd(), 'temp')
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)
-        print(f"📁 temp 폴더 생성: {temp_dir}")
-    else:
-        print(f"📁 temp 폴더 확인: {temp_dir}")
     
     # Supabase 연결 테스트
     print("🔍 Supabase 연결 테스트...")
@@ -579,7 +547,7 @@ if __name__ == '__main__':
         print("⚠️  Supabase 연결 문제 (서버는 계속 실행)")
     
     print("✅ Flask 서버 실행 중...")
-    print("🎉 브라우저 1개 방식 + 쇼핑몰 펄스 애니메이션 완성!")
+    print("🎉 완전 메모리 기반 + 쇼핑몰 펄스 애니메이션 완성!")
     
     # Leapcell 환경 맞춤 실행
     app.run(
