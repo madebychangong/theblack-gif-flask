@@ -7,6 +7,7 @@ import gc  # 🔧 Leapcell: 메모리 정리용 추가
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 from PIL import Image
+import io
 
 # 환경변수 로드
 load_dotenv()
@@ -51,16 +52,16 @@ def test_supabase_connection():
         return False
 
 # =================================
-# GIF 생성 핵심 함수들
+# 🚀 새로운 GIF 생성 핵심 함수들 (브라우저 1개 방식)
 # =================================
 
-def render_template_to_html(text, frame_number):
+def render_template_to_html(text):
     """
-    사용자 텍스트와 프레임 번호를 받아서 완성된 HTML 문자열 생성
+    사용자 텍스트를 받아서 쇼핑몰형 HTML 문자열 생성
+    (더 이상 frame_number는 필요 없음 - CSS 애니메이션 활용)
     
     Args:
         text (str): 사용자가 입력한 텍스트
-        frame_number (int): 프레임 번호 (1, 2, 3, 4)
     
     Returns:
         str: 완성된 HTML 문자열
@@ -69,19 +70,15 @@ def render_template_to_html(text, frame_number):
         # 1. 줄바꿈을 HTML <br> 태그로 변환
         formatted_text = text.replace('\n', '<br>')
         
-        # 2. 프레임 클래스 설정
-        frame_class = f"frame-{frame_number}"
-        
-        # 3. 템플릿 파일 읽기
+        # 2. 쇼핑몰형 템플릿 파일 읽기
         template_path = os.path.join('templates', 'theblackempty.html')
         with open(template_path, 'r', encoding='utf-8') as file:
             template_content = file.read()
         
-        # 4. Flask 템플릿 엔진으로 HTML 생성
+        # 3. Flask 템플릿 엔진으로 HTML 생성 (frame_class 제거)
         html_content = render_template_string(
             template_content,
-            text=formatted_text,
-            frame_class=frame_class
+            text=formatted_text
         )
         
         return html_content
@@ -89,24 +86,28 @@ def render_template_to_html(text, frame_number):
     except Exception as e:
         raise Exception(f"HTML 템플릿 생성 실패: {str(e)}")
 
-async def capture_frame_with_playwright(html_content, output_path):
+async def capture_animation_frames(html_content, frame_count=20, frame_interval=150):
     """
-    HTML 콘텐츠를 Playwright로 브라우저에 로드하고 스크린샷 촬영
+    🚀 새로운 방식: 브라우저 1개로 연속 스크린샷 캡처
+    CSS 애니메이션이 진행되는 동안 여러 프레임을 연속으로 캡처
     
     Args:
-        html_content (str): 렌더링할 HTML 문자열
-        output_path (str): 저장할 PNG 파일 경로
+        html_content (str): 렌더링할 HTML 문자열 (쇼핑몰형 템플릿)
+        frame_count (int): 캡처할 프레임 수 (기본값: 20개)
+        frame_interval (int): 프레임 간 간격 (밀리초, 기본값: 150ms)
     
     Returns:
-        str: 생성된 파일 경로
+        list: PIL Image 객체들의 리스트
     """
     browser = None
+    images = []
+    
     try:
-        print(f"📸 Playwright 캡처 시작: {os.path.basename(output_path)}")
+        print(f"🎬 브라우저 1개로 {frame_count}프레임 연속 캡처 시작")
         
-        # 1. Playwright 브라우저 실행
+        # 1. Playwright 브라우저 실행 (1번만!)
         async with async_playwright() as p:
-            # 🔧 Leapcell: 브라우저 args 강화
+            # 🔧 Leapcell: 브라우저 args 최적화
             browser = await p.chromium.launch(
                 headless=True,
                 args=[
@@ -126,67 +127,69 @@ async def capture_frame_with_playwright(html_content, output_path):
                 ]
             )
             
-            # 2. 새 페이지 생성
+            # 2. 새 페이지 생성 (1번만!)
             page = await browser.new_page()
             
-            # 3. 뷰포트 크기 설정 (720x900)
+            # 3. 뷰포트 크기 설정
             await page.set_viewport_size({"width": 720, "height": 900})
             
-            # 4. HTML 콘텐츠 로드
+            # 4. HTML 콘텐츠 로드 (1번만!)
             await page.set_content(html_content, wait_until='networkidle')
             
-            # 5. 폰트 로딩 대기 (Google Fonts)
+            # 5. 폰트 로딩 대기
             await page.wait_for_timeout(2000)  # 2초 대기
-            
-            # 6. 폰트 완전 로드 확인
             await page.evaluate("document.fonts.ready")
             
-            # 7. render-target 요소 찾기
+            # 6. render-target 요소 찾기
             render_target = await page.query_selector('.render-target')
             if not render_target:
                 raise Exception("render-target 요소를 찾을 수 없습니다")
             
-            # 8. 요소의 실제 크기 계산
-            box = await render_target.bounding_box()
-            if not box:
-                raise Exception("render-target 요소의 크기를 계산할 수 없습니다")
+            # 7. 🎨 연속 스크린샷 캡처 (브라우저는 그대로 둠!)
+            print(f"📸 {frame_count}개 프레임 연속 캡처 중...")
             
-            # 9. 스크린샷 촬영
-            await render_target.screenshot(
-                path=output_path,
-                type='png'
-            )
+            for i in range(frame_count):
+                # 프레임 간격 대기 (CSS 애니메이션이 자연스럽게 진행됨)
+                if i > 0:  # 첫 번째 프레임은 바로 캡처
+                    await page.wait_for_timeout(frame_interval)
+                
+                # 스크린샷 촬영
+                screenshot_bytes = await render_target.screenshot(type='png')
+                
+                # PIL Image 객체로 변환
+                image = Image.open(io.BytesIO(screenshot_bytes))
+                if image.mode != 'RGBA':
+                    image = image.convert('RGBA')
+                
+                images.append(image)
+                print(f"✅ 프레임 {i+1}/{frame_count} 캡처 완료")
             
+            # 8. 브라우저 종료 (1번만!)
             await browser.close()
-            
-        # 10. 파일 존재 확인
-        if not os.path.exists(output_path):
-            raise Exception("스크린샷 파일이 생성되지 않았습니다")
         
-        file_size = os.path.getsize(output_path)
-        print(f"✅ 캡처 완료: {os.path.basename(output_path)} ({file_size} bytes)")
-        
-        return output_path
+        print(f"🎉 총 {len(images)}개 프레임 캡처 완료!")
+        return images
         
     except Exception as e:
+        # 브라우저 정리
         if browser:
             try:
                 await browser.close()
             except:
                 pass
         
-        # 실패한 파일 정리
-        if os.path.exists(output_path):
+        # 이미지 객체 정리
+        for img in images:
             try:
-                os.remove(output_path)
+                img.close()
             except:
                 pass
                 
-        raise Exception(f"Playwright 캡처 실패: {str(e)}")
+        raise Exception(f"연속 캡처 실패: {str(e)}")
 
-def sync_capture_frame(html_content, output_path):
+def sync_capture_animation(html_content, frame_count=20, frame_interval=150):
     """
-    비동기 capture_frame_with_playwright를 동기적으로 실행하는 래퍼 함수
+    비동기 capture_animation_frames를 동기적으로 실행하는 래퍼 함수
     """
     try:
         # 새 이벤트 루프에서 실행
@@ -194,7 +197,7 @@ def sync_capture_frame(html_content, output_path):
         asyncio.set_event_loop(loop)
         try:
             result = loop.run_until_complete(
-                capture_frame_with_playwright(html_content, output_path)
+                capture_animation_frames(html_content, frame_count, frame_interval)
             )
             return result
         finally:
@@ -202,45 +205,30 @@ def sync_capture_frame(html_content, output_path):
     except Exception as e:
         raise Exception(f"동기 캡처 실행 실패: {str(e)}")
 
-def create_gif_from_frames(frame_paths, output_gif_path, duration=800):
+def create_gif_from_frames(images, output_gif_path, duration=100):
     """
-    4개의 PNG 프레임을 하나의 애니메이션 GIF로 합성
+    여러 PIL Image 객체들을 하나의 애니메이션 GIF로 합성
+    (20프레임 지원으로 업그레이드)
     
     Args:
-        frame_paths (list): PNG 파일 경로들의 리스트
+        images (list): PIL Image 객체들의 리스트
         output_gif_path (str): 생성될 GIF 파일 경로
-        duration (int): 각 프레임 지속 시간 (밀리초, 기본값: 800ms)
+        duration (int): 각 프레임 지속 시간 (밀리초, 기본값: 100ms)
     
     Returns:
         str: 생성된 GIF 파일 경로
     """
     try:
-        print(f"🎨 GIF 생성 시작: {os.path.basename(output_gif_path)}")
+        print(f"🎨 {len(images)}개 프레임으로 GIF 생성 시작: {os.path.basename(output_gif_path)}")
         
-        # 1. 모든 프레임 파일 존재 확인
-        images = []
-        for i, frame_path in enumerate(frame_paths):
-            if not os.path.exists(frame_path):
-                raise Exception(f"프레임 파일이 존재하지 않습니다: {frame_path}")
-            
-            try:
-                img = Image.open(frame_path)
-                # RGBA 모드로 변환 (투명도 지원)
-                if img.mode != 'RGBA':
-                    img = img.convert('RGBA')
-                images.append(img)
-                print(f"📷 프레임 {i+1} 로드: {img.size}")
-            except Exception as e:
-                raise Exception(f"프레임 {i+1} 로드 실패: {str(e)}")
+        if len(images) < 2:
+            raise Exception(f"최소 2개의 프레임이 필요하지만 {len(images)}개만 있습니다")
         
-        if len(images) != 4:
-            raise Exception(f"4개의 프레임이 필요하지만 {len(images)}개만 로드됨")
-        
-        # 2. 첫 번째 이미지를 기준으로 GIF 생성
+        # 첫 번째 이미지를 기준으로 GIF 생성
         first_image = images[0]
         other_images = images[1:]
         
-        # 3. GIF로 저장
+        # GIF로 저장
         first_image.save(
             output_gif_path,
             save_all=True,
@@ -251,27 +239,18 @@ def create_gif_from_frames(frame_paths, output_gif_path, duration=800):
             format='GIF'
         )
         
-        # 4. 생성된 파일 확인
+        # 생성된 파일 확인
         if not os.path.exists(output_gif_path):
             raise Exception("GIF 파일이 생성되지 않았습니다")
         
         file_size = os.path.getsize(output_gif_path)
+        total_duration = len(images) * duration
         print(f"✅ GIF 생성 완료: {os.path.basename(output_gif_path)} ({file_size} bytes)")
-        
-        # 5. 이미지 객체 정리
-        for img in images:
-            img.close()
+        print(f"🎬 총 {len(images)}프레임, {total_duration}ms 재생시간")
         
         return output_gif_path
         
     except Exception as e:
-        # 이미지 객체 정리
-        for img in images:
-            try:
-                img.close()
-            except:
-                pass
-        
         # 실패한 GIF 파일 정리
         if os.path.exists(output_gif_path):
             try:
@@ -284,13 +263,7 @@ def create_gif_from_frames(frame_paths, output_gif_path, duration=800):
 def upload_gif_to_supabase_http(gif_file_path, retries=3):
     """
     requests를 사용해 GIF 파일을 Supabase Storage에 직접 업로드
-    
-    Args:
-        gif_file_path (str): 업로드할 GIF 파일 경로
-        retries (int): 실패시 재시도 횟수
-    
-    Returns:
-        str: Public URL
+    (기존과 동일 - 변경 없음)
     """
     try:
         print(f"📤 Supabase HTTP 업로드 시작: {os.path.basename(gif_file_path)}")
@@ -349,17 +322,6 @@ def upload_gif_to_supabase_http(gif_file_path, retries=3):
                     public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{filename}"
                     
                     print(f"🌐 Public URL 생성: {public_url}")
-                    
-                    # 8. URL 접근 가능성 확인
-                    try:
-                        verify_response = requests.head(public_url, timeout=10)
-                        if verify_response.status_code == 200:
-                            print("✅ Public URL 접근 확인 완료")
-                        else:
-                            print(f"⚠️  Public URL 접근 확인 실패: {verify_response.status_code}")
-                    except:
-                        print("⚠️  Public URL 확인 건너뜀")
-                    
                     return public_url
                     
                 else:
@@ -386,98 +348,101 @@ def cleanup_memory():
     gc.collect()  # 가비지 컬렉션 강제 실행
     print("🧹 메모리 정리 완료")
 
-def generate_complete_gif_with_upload(text):
+def generate_complete_gif_with_upload(text, frame_count=20, frame_interval=150):
     """
-    전체 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
+    🚀 완전히 개선된 GIF 생성 + Supabase HTTP 업로드 통합 프로세스
+    브라우저 1개로 연속 캡처 방식 사용
     
     Args:
         text (str): 사용자 입력 텍스트
+        frame_count (int): 캡처할 프레임 수 (기본값: 20개)
+        frame_interval (int): 프레임 간 간격 (밀리초, 기본값: 150ms)
     
     Returns:
         dict: 생성 및 업로드 결과 정보
     """
-    temp_files = []  # 정리할 임시 파일들
+    images = []  # 정리할 이미지들
     local_gif_path = None
     
     try:
-        print(f"🎬 완전한 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
+        print(f"🎬 브라우저 1개 방식으로 GIF 생성 + HTTP 업로드 시작: {text[:30]}...")
         
         # temp 폴더 확인
-        temp_dir = '/tmp'
+        temp_dir = os.path.join(os.getcwd(), 'temp')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
         
         timestamp = int(time.time())
-        frame_paths = []
         
-        # 1단계: 4개 프레임 모두 생성
-        print("📸 4개 프레임 캡처 시작...")
-        for frame in range(1, 5):
-            print(f"🎭 프레임 {frame}/4 생성 중...")
-            
-            # 1-1. HTML 템플릿 생성
-            html_content = render_template_to_html(text, frame)
-            
-            # 1-2. PNG 캡처
-            frame_filename = f"frame_{timestamp}_{frame}.png"
-            frame_path = os.path.join(temp_dir, frame_filename)
-            temp_files.append(frame_path)
-            
-            sync_capture_frame(html_content, frame_path)
-            frame_paths.append(frame_path)
-            
-            print(f"✅ 프레임 {frame} 완료")
+        # 1단계: HTML 템플릿 생성 (1번만!)
+        print("📝 쇼핑몰형 HTML 템플릿 생성...")
+        html_content = render_template_to_html(text)
         
-        # 2단계: GIF 합성
-        print("🎨 4개 프레임을 GIF로 합성...")
-        gif_filename = f"theblack_gif_{timestamp}.gif"
+        # 2단계: 🚀 브라우저 1개로 연속 캡처
+        print(f"🎨 브라우저 1개로 {frame_count}개 프레임 연속 캡처...")
+        images = sync_capture_animation(html_content, frame_count, frame_interval)
+        
+        # 3단계: GIF 합성
+        print(f"🎬 {len(images)}개 프레임을 GIF로 합성...")
+        gif_filename = f"theblack_shop_gif_{timestamp}.gif"
         local_gif_path = os.path.join(temp_dir, gif_filename)
         
-        create_gif_from_frames(frame_paths, local_gif_path, duration=800)
+        create_gif_from_frames(images, local_gif_path, duration=frame_interval)
         local_gif_size = os.path.getsize(local_gif_path)
         
-        # 3단계: Supabase HTTP 업로드
+        # 4단계: Supabase HTTP 업로드
         print("📤 Supabase HTTP 업로드 시작...")
         public_url = upload_gif_to_supabase_http(local_gif_path)
         
-        # 4단계: 결과 정보 수집
+        # 5단계: 결과 정보 수집
+        total_duration = len(images) * frame_interval
         result = {
             'success': True,
             'public_url': public_url,
             'local_path': local_gif_path,
             'gif_size': local_gif_size,
-            'frames_generated': len(frame_paths),
-            'duration_per_frame': 800,
-            'total_duration': 800 * 4,
+            'frames_generated': len(images),
+            'duration_per_frame': frame_interval,
+            'total_duration': total_duration,
             'loop_count': 'infinite',
             'upload_success': True,
-            'filename': 'bg1.gif'
+            'filename': 'bg1.gif',
+            'capture_method': 'browser_1x_continuous',  # 🚀 새로운 방식 표시
+            'animation_type': 'css_pulse_wave'  # 펄스 파도 애니메이션
         }
         
-        print(f"🎉 GIF 생성 + HTTP 업로드 완전 성공!")
+        print(f"🎉 브라우저 1개 방식 GIF 생성 + HTTP 업로드 완전 성공!")
         print(f"🌐 Public URL: {public_url}")
+        print(f"📊 {len(images)}프레임, {total_duration}ms, {local_gif_size} bytes")
         
         return result
         
     except Exception as e:
-        print(f"❌ GIF 생성 + HTTP 업로드 실패: {str(e)}")
-        
+        print(f"❌ 브라우저 1개 방식 GIF 생성 + HTTP 업로드 실패: {str(e)}")
         raise Exception(f"완전한 GIF 생성 + HTTP 업로드 실패: {str(e)}")
     
     finally:
-        # 임시 프레임 파일들 정리
-        print("🧹 임시 파일 정리 중...")
-        for temp_file in temp_files:
+        # 이미지 객체들 정리
+        print("🧹 이미지 객체 정리 중...")
+        for img in images:
             try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    print(f"🗑️  정리: {os.path.basename(temp_file)}")
+                img.close()
             except Exception as cleanup_error:
-                print(f"⚠️  정리 실패: {temp_file} - {cleanup_error}")
+                print(f"⚠️  이미지 정리 실패: {cleanup_error}")
+        
+        # 로컬 GIF 파일 정리 (선택사항)
+        if local_gif_path and os.path.exists(local_gif_path):
+            try:
+                os.remove(local_gif_path)
+                print(f"🗑️  로컬 GIF 파일 정리: {os.path.basename(local_gif_path)}")
+            except Exception as cleanup_error:
+                print(f"⚠️  로컬 파일 정리 실패: {cleanup_error}")
         
         # 🔧 Leapcell: 메모리 정리 추가
         cleanup_memory()
 
 # =================================
-# Flask 라우트들
+# Flask 라우트들 (기존과 동일)
 # =================================
 
 @app.route('/')
@@ -501,26 +466,33 @@ def health_check():
     
     return jsonify({
         'status': 'OK',
-        'message': 'THE BLACK GIF Generator 서버가 정상 작동 중입니다!',
-        'version': '5.0.0',
+        'message': 'THE BLACK SHOP GIF Generator 서버가 정상 작동 중입니다!',
+        'version': '6.0.0',  # 🚀 업그레이드 버전
         'functions': [
             'render_template_to_html', 
-            'capture_frame_with_playwright',
+            'capture_animation_frames',  # 🚀 새로운 함수
+            'sync_capture_animation',    # 🚀 새로운 함수
             'create_gif_from_frames',
             'upload_gif_to_supabase_http',
             'generate_complete_gif_with_upload'
         ],
         'supabase_connected': supabase_connected,
         'dependencies': 'greenlet-free (requests only)',
-        'platform': 'Leapcell Serverless'  # 🔧 추가
+        'platform': 'Leapcell Serverless',
+        'capture_method': 'browser_1x_continuous',  # 🚀 새로운 방식
+        'animation_support': 'css_pulse_wave_20fps'  # 🚀 20프레임 지원
     })
 
 @app.route('/api/generate-gif', methods=['POST'])
 def generate_gif_api():
-    """GIF 생성 API - Supabase HTTP 업로드 포함 완전한 기능"""
+    """🚀 개선된 GIF 생성 API - 브라우저 1개 방식 + 쇼핑몰 템플릿"""
     try:
         data = request.get_json()
         text = data.get('text', '')
+        
+        # 선택적 파라미터들 (기본값 있음)
+        frame_count = data.get('frame_count', 20)  # 20프레임 기본
+        frame_interval = data.get('frame_interval', 150)  # 150ms 간격 기본
         
         if not text:
             return jsonify({
@@ -528,11 +500,12 @@ def generate_gif_api():
                 'error': '텍스트를 입력해주세요.'
             }), 400
         
-        print(f"🎬 GIF 생성 + HTTP 업로드 요청: {text[:50]}...")
+        print(f"🎬 브라우저 1개 방식 GIF 생성 요청: {text[:50]}...")
+        print(f"⚙️  설정: {frame_count}프레임, {frame_interval}ms 간격")
         
         try:
-            # 완전한 GIF 생성 + HTTP 업로드 실행
-            result = generate_complete_gif_with_upload(text)
+            # 🚀 완전히 개선된 GIF 생성 + HTTP 업로드 실행
+            result = generate_complete_gif_with_upload(text, frame_count, frame_interval)
             
             # 성공 응답
             return jsonify({
@@ -540,15 +513,16 @@ def generate_gif_api():
                 'gifUrl': result['public_url'],  # 실제 Supabase Public URL
                 'fileName': result['filename'],
                 'fileSize': f"{result['gif_size']} bytes",
-                'htmlCode': f'<a href="https://open.kakao.com/o/gUVp9cwh" target="_blank" rel="noopener noreferrer"><img src="{result["public_url"]}" alt="THE BLACK SHOP GIF" style="max-width:100%; height:auto; border-radius:12px; display: block; margin: 0 auto;"></a>',
+                'htmlCode': f'<img src="{result["public_url"]}" alt="THE BLACK SHOP GIF" style="max-width:100%; height:auto; border-radius:12px; display: block; margin: 0 auto;">',
                 'generation_info': {
                     'frames': result['frames_generated'],
                     'duration_per_frame': f"{result['duration_per_frame']}ms",
                     'total_duration': f"{result['total_duration']}ms",
                     'loop': result['loop_count'],
                     'uploaded_to_supabase': result['upload_success'],
-                    'method': 'HTTP requests (greenlet-free)',
-                    'platform': 'Leapcell Serverless'  # 🔧 추가
+                    'method': result['capture_method'],  # 🚀 브라우저 1개 방식 표시
+                    'animation_type': result['animation_type'],  # 🚀 CSS 펄스 애니메이션
+                    'platform': 'Leapcell Serverless'
                 }
             })
             
@@ -578,13 +552,14 @@ if __name__ == '__main__':
     # 환경변수에서 포트 읽기 (Leapcell용)
     port = int(os.getenv('PORT', 5000))
     
-    print("🚀 THE BLACK GIF Generator 서버 시작!")
+    print("🚀 THE BLACK SHOP GIF Generator 서버 시작! (브라우저 1개 방식)")
     print(f"📡 포트: {port}")
     print("📁 정적 파일: static 폴더")
     print("📝 템플릿 파일: templates 폴더")
-    print("🎭 Playwright: 브라우저 자동화 준비")
-    print("🎨 Pillow: 이미지 처리 준비")
+    print("🎭 Playwright: 브라우저 1개 연속 캡처 준비")
+    print("🎨 Pillow: 20프레임 이미지 처리 준비")
     print("📤 Supabase: HTTP 직접 업로드 (greenlet-free)")
+    print("🌊 CSS 펄스 파도 애니메이션 지원")
     print("🌐 Leapcell 서버리스 환경 최적화")
     
     # 기본적인 폴더 확인
@@ -603,7 +578,7 @@ if __name__ == '__main__':
         print("⚠️  Supabase 연결 문제 (서버는 계속 실행)")
     
     print("✅ Flask 서버 실행 중...")
-    print("🎉 완전한 GIF 생성 + HTTP 업로드 기능 준비 완료!")
+    print("🎉 브라우저 1개 방식 + 쇼핑몰 펄스 애니메이션 완성!")
     
     # Leapcell 환경 맞춤 실행
     app.run(
@@ -611,5 +586,3 @@ if __name__ == '__main__':
         host='0.0.0.0',  # 모든 IP에서 접근 가능
         port=port  # 🔧 동적 포트
     )
-
-
