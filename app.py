@@ -540,7 +540,7 @@ def generate_gif_api():
                 'gifUrl': result['public_url'],  # 실제 Supabase Public URL
                 'fileName': result['filename'],
                 'fileSize': f"{result['gif_size']} bytes",
-                'htmlCode': f'<img src="{result["public_url"]}" alt="THE BLACK SHOP GIF" style="max-width:100%; height:auto; border-radius:12px; display: block; margin: 0 auto;">',
+                'htmlCode': f'<a href="https://open.kakao.com/o/gUVp9cwh" target="_blank" rel="noopener noreferrer"><img src="{result["public_url"]}" alt="THE BLACK SHOP GIF" style="max-width:100%; height:auto; border-radius:12px; display: block; margin: 0 auto;"></a>',
                 'generation_info': {
                     'frames': result['frames_generated'],
                     'duration_per_frame': f"{result['duration_per_frame']}ms",
@@ -611,4 +611,5 @@ if __name__ == '__main__':
         host='0.0.0.0',  # 모든 IP에서 접근 가능
         port=port  # 🔧 동적 포트
     )
+
 
