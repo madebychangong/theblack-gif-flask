@@ -1,242 +1,529 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>더블랙샵 GIF 버전</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>쇼핑몰형 블랙샵</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+    @font-face {
+      font-family: 'NanumSquare';
+      src: url('./fonts/NanumSquareB.woff') format('woff');
+      font-weight: bold;
+      font-style: normal;
+    }
+    
+    /* 배지 펄스 애니메이션 */
+    @keyframes badge-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    /* HOT 카드 펄스 - 파도처럼 번져나가는 효과 */
+    @keyframes hot-border-pulse {
+      0%, 100% { 
+        border-color: #ff6b35;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 0px rgba(255, 107, 53, 0);
+      }
+      50% { 
+        border-color: #ff8c42;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 3px rgba(255, 107, 53, 0.6),
+          0 0 0 8px rgba(255, 107, 53, 0.4),
+          0 0 0 15px rgba(255, 107, 53, 0.2),
+          0 0 0 25px rgba(255, 107, 53, 0.1);
+      }
+    }
+    
+    /* 인기 카드 펄스 - 파도처럼 번져나가는 효과 */
+    @keyframes premium-border-pulse {
+      0%, 100% { 
+        border-color: #ffd700;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 0px rgba(255, 215, 0, 0);
+      }
+      50% { 
+        border-color: #ffed4a;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 3px rgba(255, 215, 0, 0.7),
+          0 0 0 8px rgba(255, 215, 0, 0.5),
+          0 0 0 15px rgba(255, 215, 0, 0.3),
+          0 0 0 25px rgba(255, 215, 0, 0.1);
+      }
+    }
+    
+    /* 최저가 카드 펄스 - 파도처럼 번져나가는 효과 */
+    @keyframes lowest-border-pulse {
+      0%, 100% { 
+        border-color: #28a745;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 0px rgba(40, 167, 69, 0);
+      }
+      50% { 
+        border-color: #48bb78;
+        box-shadow: 
+          0 4px 20px rgba(0, 0, 0, 0.08),
+          0 0 0 3px rgba(40, 167, 69, 0.6),
+          0 0 0 8px rgba(40, 167, 69, 0.4),
+          0 0 0 15px rgba(40, 167, 69, 0.2),
+          0 0 0 25px rgba(40, 167, 69, 0.1);
+      }
+    }
+    
     body {
-      background: #000000;
+      background: #f8f9fa;
       margin: 0;
-      padding: 0;
-      font-family: 'Noto Sans KR', Arial, sans-serif;
+      padding: 20px 0;
+      font-family: 'Noto Sans KR', 'NanumSquare', sans-serif;
     }
     
     .render-target {
       width: 720px;
-      min-height: 900px;
-      margin: 0;
-      background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-      color: #ffffff;
-      padding: 30px;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      color: #333333;
       box-sizing: border-box;
-      position: relative;
-      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .shop-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      padding: 20px 30px;
+      text-align: center;
     }
     
     .shop-title {
-      font-size: 54px;
+      font-size: 40px;
       font-weight: 800;
-      text-align: center;
-      margin: 1px 0;
-      letter-spacing: 2px;
-      transition: all 0.5s ease;
-    }
-    
-    /* 제목 자연스러운 그라데이션 흐르는 효과 */
-    .frame-1 .shop-title {
-      background: linear-gradient(45deg, #ffd700, #ffb347, #ff8c00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .frame-2 .shop-title {
-      background: linear-gradient(90deg, #ffb347, #ff8c00, #ff6347);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .frame-3 .shop-title {
-      background: linear-gradient(135deg, #ff8c00, #ff6347, #ff4500);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .frame-4 .shop-title {
-      background: linear-gradient(180deg, #ff6347, #ff4500, #ffd700);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .icon {
-      display: inline-block;
-      margin: 0 10px;
-      font-size: 32px;
-      transform: scale(1.0);
-      transition: all 0.5s ease;
+      margin: 0 0 8px 0;
+      letter-spacing: 1px;
     }
     
     .shop-subtitle {
-      text-align: center;
-      font-size: 18px;
-      color: #cccccc;
-      margin-bottom: 5px;
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0;
     }
     
-    .subtitle-divider {
-      border: none;
-      border-top: 1px solid #444444;
-      margin: 15px auto;
-      width: 80%;
-    }
-    
-    .info-list {
-      list-style: none;
-      padding: 0;
-      margin: 5px 0;
-      text-align: center;
-    }
-    
-    .info-list li {
-      font-size: 18px;
-      margin: 4px 0;
+    .quick-contact {
+      background: #4c63d2;
       color: #ffffff;
       text-align: center;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: 600;
     }
     
-    .info-list .icon {
-      margin-right: 15px;
+    .products-container {
+      padding: 20px;
+    }
+    
+    .section-title {
       font-size: 24px;
-      transform: scale(1.0);
-    }
-    
-    .cta-btn {
-      text-align: center;
-      font-size: 22px;
       font-weight: 700;
-      padding: 18px 35px;
-      margin: 5px auto;
-      border-radius: 15px;
-      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid transparent;
-      max-width: 400px;
-    }
-    
-    /* 오픈채팅 버튼 부드러운 그라데이션 흐르는 효과 */
-    .frame-1 .cta-btn {
-      background: linear-gradient(45deg, #4169e1, #6a5acd, #8a2be2);
-      border-color: #4169e1;
-      box-shadow: 0 0 1px rgba(65, 105, 225, 0.4);
-    }
-    
-    .frame-2 .cta-btn {
-      background: linear-gradient(90deg, #6a5acd, #8a2be2, #9370db);
-      border-color: #6a5acd;
-      box-shadow: 0 0 2px rgba(106, 90, 205, 0.5);
-    }
-    
-    .frame-3 .cta-btn {
-      background: linear-gradient(135deg, #8a2be2, #9370db, #ba55d3);
-      border-color: #8a2be2;
-      box-shadow: 0 0 3px rgba(138, 43, 226, 0.6);
-    }
-    
-    .frame-4 .cta-btn {
-      background: linear-gradient(180deg, #9370db, #ba55d3, #4169e1);
-      border-color: #9370db;
-      box-shadow: 0 0 2px rgba(147, 112, 219, 0.5);
-    }
-    
-    .divider {
-      border: none;
-      border-top: 2px solid #444444;
-      margin: 10px auto;
-      width: 90%;
-    }
-    
-    .section-price-title {
+      color: #2c3e50;
+      margin: 0 0 15px 0;
       text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      color: #ffaa00;
-      margin: 5px 0;
-      transition: all 0.5s ease;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #667eea;
     }
     
-    .frame-1 .section-price-title { 
-      color: #ffaa00; 
-      text-shadow: 0 0 1px rgba(255, 170, 0, 0.7);
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 20px 0;
     }
-    .frame-2 .section-price-title { 
-      color: #ff6600; 
-      text-shadow: 0 0 2px rgba(255, 102, 0, 0.8);
+    
+    .product-card {
+      background: #ffffff;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
     }
-    .frame-3 .section-price-title { 
-      color: #ff0066; 
-      text-shadow: 0 0 3px rgba(255, 0, 102, 0.9);
+    
+    .product-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0 0 12px 0;
     }
-    .frame-4 .section-price-title { 
-      color: #ffaa00; 
-      text-shadow: 0 0 2px rgba(255, 170, 0, 0.7);
+    
+    .product-description {
+      font-size: 15px;
+      color: #6c757d;
+      line-height: 1.6;
+      margin: 0 0 15px 0;
+    }
+    
+    .product-features {
+      font-size: 14px;
+      color: #495057;
+      background: #f8f9fa;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin: 12px 0 0 0;
+    }
+    
+    /* HOT 배지 - 바로 시작하는 펄스 */
+    .hot-product {
+      border: 2px solid #ff6b35;
+      background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%);
+      position: relative;
+      animation: hot-border-pulse 2s ease-in-out infinite;
+    }
+    
+    .hot-product::before {
+      content: '🔥 HOT!';
+      position: absolute;
+      top: -17px;
+      right: 15px;
+      background: #ff6b35;
+      color: #ffffff;
+      padding: 5px 12px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 20px;
+      animation: badge-pulse 2s ease-in-out infinite;
+    }
+    
+    /* 인기 배지 - 0.3초 지연 펄스 */
+    .premium-product {
+      border: 2px solid #ffd700;
+      background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+      position: relative;
+      animation: premium-border-pulse 2s ease-in-out infinite 0.3s;
+    }
+    
+    .premium-product::before {
+      content: '⭐ 인기';
+      position: absolute;
+      top: -17px;
+      right: 15px;
+      background: #ffd700;
+      color: #333333;
+      padding: 5px 12px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 20px;
+      animation: badge-pulse 2s ease-in-out infinite 0.3s;
+    }
+    
+    /* 최저가 배지 - 0.6초 지연 펄스 */
+    .lowest-price {
+      border: 2px solid #28a745;
+      background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+      position: relative;
+      animation: lowest-border-pulse 2s ease-in-out infinite 0.6s;
+    }
+    
+    .lowest-price::before {
+      content: '💰 최저가';
+      position: absolute;
+      top: -17px;
+      right: 15px;
+      background: #28a745;
+      color: #ffffff;
+      padding: 5px 12px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 20px;
+      animation: badge-pulse 2s ease-in-out infinite 0.6s;
+    }
+    
+    
+    /* 심플한 추가 서비스 스타일 */
+    .simple-services {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 15px 0;
+    }
+    
+    .simple-service-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .simple-service-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .simple-service-desc {
+      font-size: 13px;
+      color: #6c757d;
+      line-height: 1.4;
+    }
+    
+    /* 심플한 보장 서비스 스타일 */
+    .guarantee-simple {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+    
+    .guarantee-simple-item {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px 8px;
+      border-radius: 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .guarantee-simple-item .guarantee-icon {
+      font-size: 18px;
+      margin: 0;
+    }
+    
+    .guarantee-simple-item .guarantee-text {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .best-builds-section {
+      background: #f8f9fa;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    
+    .builds-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .build-item {
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .build-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #667eea;
+      margin: 0 0 8px 0;
+    }
+    
+    .build-class {
+      font-size: 14px;
+      color: #6c757d;
+      margin: 0;
+    }
+    
+    .guarantee-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .guarantee-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 15px 0;
+    }
+    
+    .cta-section {
+      background: #2c3e50;
+      color: #ffffff;
+      padding: 25px 30px;
+      text-align: center;
+    }
+    
+    .cta-title {
+      font-size: 25px;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    
+    .cta-text {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    /* 실시간 가격표 섹션 */
+    .price-section {
+      background: #f8f9fa;
+      padding: 30px;
+      border-top: 1px solid #dee2e6;
     }
     
     .user-content {
-      text-align: center;
+      background: #ffffff;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 25px;
       font-size: 16px;
-      color: #ffffff;
-      margin: 15px 0;
-      padding: 0;
-      background: transparent;
-      border-radius: 0;
-      white-space: pre-wrap;
+      color: #333333;
       line-height: 1.6;
-      border: none;
-    }
-    
-    /* 아이콘 깜빡임 효과 - 모든 프레임에서 동일한 크기 유지 */
-    .frame-1 .info-list li:nth-child(1) .icon { 
-      color: #ff6666; 
-      transform: scale(1.0);
-    }
-    .frame-2 .info-list li:nth-child(2) .icon { 
-      color: #66ff66; 
-      transform: scale(1.0);
-    }
-    .frame-3 .info-list li:nth-child(3) .icon { 
-      color: #6666ff; 
-      transform: scale(1.0);
-    }
-    .frame-4 .info-list li:nth-child(4) .icon { 
-      color: #ffff66; 
-      transform: scale(1.0);
+      white-space: pre-wrap;
+      min-height: 100px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="render-target {{frame_class}}">
-    <div>
-      <h1 class="shop-title">
-        </span> THE BLACK SHOP
-      </h1>
-      <div class="shop-subtitle">디아블로4 시즌9 버스 · 대리 · 아이템 전문 거래소</div>
-      <hr class="subtitle-divider">
+  <div class="render-target">
+    <div class="shop-header">
+      <div class="shop-title">🎮 THE BLACK SHOP</div>
+      <div class="shop-subtitle">D4. 시즌 9 - 믿을 수 있는 국내 운영, 합리적인 가격</div>
     </div>
     
-    <ul class="info-list">
-      <li><span class="icon">🦾</span>모든 장비, 아이템, 재료 완비</li>
-      <li><span class="icon">🚌</span>버스, 대리, 세팅 풀 지원</li>
-      <li><span class="icon">🦸‍♂️</span>경험 많은 전문 기사 상시 대기</li>
-      <li><span class="icon">🔥</span>합리적인 실시간 최저가 보장</li>
-    </ul>
-    
-    <div class="cta-btn">
-      💬 오픈채팅은 가격표 클릭!
+    <div class="quick-contact">
+      📞 [ 클릭만 하면! 바로 상담가능 ]
     </div>
     
-    <hr class="divider">
-    
-    <div>
-      <h2 class="section-price-title">💰 실시간 가격표</h2>
+    <div class="products-container">
+      <div class="section-title">🎰 인기 서비스</div>
+      
+      <div class="products-grid">
+        <div class="product-card hot-product">
+          <div class="product-name">아이템 판매 전문</div>
+          <div class="product-description">원하는 모든 어픽템 판매합니다.</div>
+          <div class="product-features">✓ 최저가 ✓ 단골서비스</div>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-name">우버템 파밍</div>
+          <div class="product-description">신화 고유템 어픽 저격부터 원하는 템 확실히 구해드립니다.</div>
+          <div class="product-features">✓ 전문가 작업 ✓ 안전보장 ✓ 빠른파밍</div>
+        </div>
+        
+        <div class="product-card premium-product">
+          <div class="product-name">명품화 전문</div>
+          <div class="product-description">핵심옵 3저격 명품화 12강까지 완벽하게 작업해드립니다</div>
+          <div class="product-features">✓ 맞춤 상담부터 ✓ 빠른작업</div>
+        </div>
+        
+        <div class="product-card lowest-price">
+          <div class="product-name">풀세팅 패키지</div>
+          <div class="product-description">1~60렙 + 정복자 240렙 + 모든 문양 업글 + 최적 장비 세팅</div>
+          <div class="product-features">✓ 올인원 패키지 ✓ 가성비 최고</div>
+        </div>
+      </div>
+      
+      <div class="section-title">🌪️ 추가 서비스</div>
+      
+      <div class="simple-services">
+        <div class="simple-service-item">
+          <span class="simple-service-name">🎯 재료 파밍</span>
+          <span class="simple-service-desc">옵두사이트, 잊힌영혼, 강철, 날가죽 등</span>
+        </div>
+        <div class="simple-service-item">
+          <span class="simple-service-name">🚌 벨리알 버스</span>
+          <span class="simple-service-desc">고행4 벨리알 50판, 100판 원하는 만큼</span>
+        </div>
+        <div class="simple-service-item">
+          <span class="simple-service-name">⚔️ 레벨업 대리</span>
+          <span class="simple-service-desc">1~60렙 + 정복자 안전하게</span>
+        </div>
+        <div class="simple-service-item">
+          <span class="simple-service-name">🏆 기타 서비스</span>
+          <span class="simple-service-desc">문의 시 맞춤 상담 가능</span>
+        </div>
+      </div>
     </div>
     
-    <div class="user-content">
-      {{text|safe}}
+    <div class="best-builds-section">
+      <div class="section-title">🍄 이번 시즌 추천 빌드</div>
+      
+      <div class="builds-grid">
+        <div class="build-item">
+          <div class="build-name">히드라 플리커</div>
+          <div class="build-class">원소술사 추천</div>
+        </div>
+        <div class="build-item">
+          <div class="build-name">조폭 강령</div>
+          <div class="build-class">강령술사 추천</div>
+        </div>
+        <div class="build-item">
+          <div class="build-name">동료 드루</div>
+          <div class="build-class">드루이드 추천</div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; font-size: 15px; color: #6c757d; margin-top: 10px;">
+        명망작 및 캠페인 완료 및 기타 빌드도 맞춤 상담 가능!
+      </div>
+    </div>
+    
+    <div class="guarantee-section">
+      <div class="guarantee-title">🦴 서비스 보장</div>
+      
+      <div class="guarantee-simple">
+        <div class="guarantee-simple-item">
+          <span class="guarantee-icon">🎲</span>
+          <span class="guarantee-text">합리적 가격</span>
+        </div>
+        <div class="guarantee-simple-item">
+          <span class="guarantee-icon">🌊</span>
+          <span class="guarantee-text">빠른 진행</span>
+        </div>
+        <div class="guarantee-simple-item">
+          <span class="guarantee-icon">🧠</span>
+          <span class="guarantee-text">안전 보장</span>
+        </div>
+        <div class="guarantee-simple-item">
+          <span class="guarantee-icon">🔌</span>
+          <span class="guarantee-text">사후 관리</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="cta-section">
+      <div class="cta-title">💰 실시간 가격표</div>
+      <div class="cta-text">아래 가격표는 최신글 마다 업데이트 됩니다.</div>
+    </div>
+    
+    <!-- 실시간 가격표 섹션 추가 -->
+    <div class="price-section">
+      <div class="user-content">여기에 실시간 가격 정보가 들어갑니다.</div>
     </div>
   </div>
+  
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const target = document.querySelector('.render-target');
+      let html = target.innerHTML;
+      
+      // URL 파라미터로 템플릿 변수 처리
+      for (const [key, value] of params.entries()) {
+        const pattern = new RegExp(`{{${key}(\\|safe)?}}`, 'g');
+        html = html.replace(pattern, decodeURIComponent(value));
+      }
+      
+      // {{text|safe}} 기본값 설정
+      if (!params.has('text')) {
+        html = html.replace(/{{text(\|safe)?}}/g, '가격 정보를 불러오는 중...');
+      }
+      
+      target.innerHTML = html;
+    });
+  </script>
 </body>
 </html>
