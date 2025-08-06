@@ -503,26 +503,5 @@
       <div class="price-section">
   <div class="user-content">{{text|safe}}</div>
 </div>
-  
-  <script>
-    window.addEventListener('DOMContentLoaded', function () {
-      const params = new URLSearchParams(window.location.search);
-      const target = document.querySelector('.render-target');
-      let html = target.innerHTML;
-      
-      // URL 파라미터로 템플릿 변수 처리
-      for (const [key, value] of params.entries()) {
-        const pattern = new RegExp(`{{${key}(\\|safe)?}}`, 'g');
-        html = html.replace(pattern, decodeURIComponent(value));
-      }
-      
-      // {{text|safe}} 기본값 설정
-      if (!params.has('text')) {
-        html = html.replace(/{{text(\|safe)?}}/g, '가격 정보를 불러오는 중...');
-      }
-      
-      target.innerHTML = html;
-    });
-  </script>
 </body>
 </html>
