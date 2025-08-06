@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import asyncio
 import time
@@ -58,7 +58,7 @@ def test_supabase_connection():
 def render_template_to_html(text):
     """
     사용자 텍스트를 받아서 쇼핑몰형 HTML 문자열 생성
-    (더 이상 frame_number는 필요 없음 - CSS 애니메이션 활용)
+    🔧 Flask 템플릿 엔진 대신 단순 문자열 치환 방식 사용 (안전함)
     
     Args:
         text (str): 사용자가 입력한 텍스트
@@ -75,11 +75,12 @@ def render_template_to_html(text):
         with open(template_path, 'r', encoding='utf-8') as file:
             template_content = file.read()
         
-        # 3. Flask 템플릿 엔진으로 HTML 생성 (frame_class 제거)
-        html_content = render_template_string(
-            template_content,
-            text=formatted_text
-        )
+        # 3. 🔧 단순 문자열 치환 (Flask 템플릿 엔진 사용 안 함)
+        # {{text|safe}} 를 실제 텍스트로 치환
+        html_content = template_content.replace('{{text|safe}}', formatted_text)
+        
+        # 혹시 다른 변수들도 있다면 처리
+        html_content = html_content.replace('{{text}}', formatted_text)
         
         return html_content
         
