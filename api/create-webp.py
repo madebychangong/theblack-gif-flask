@@ -23,10 +23,13 @@ class handler(BaseHTTPRequestHandler):
             # base64 이미지 디코딩
             frames = []
             for frame_data in data['frames']:
-                # data:image/png;base64, 제거
+                # data:image/png;base64, 또는 data:image/jpeg;base64, 제거
                 img_data = frame_data.split(',')[1] if ',' in frame_data else frame_data
                 img_bytes = base64.b64decode(img_data)
                 img = Image.open(BytesIO(img_bytes))
+                # RGBA를 RGB로 변환 (WebP 호환성)
+                if img.mode == 'RGBA':
+                    img = img.convert('RGB')
                 frames.append(img)
 
             # WebP 애니메이션 생성
