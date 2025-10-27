@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>더블랙샵 - WebP 애니메이션 생성기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans KR', Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      padding: 40px 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+    h2 {
+      color: #ffd700;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .section {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .section h3 {
+      color: #00ffd5;
+      margin-top: 0;
+    }
+    .config-note {
+      background: #333;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #ffd700;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 16px;
+      font-size: 16px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 6px;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: 'Noto Sans KR', monospace;
+    }
+    button {
+      margin-top: 15px;
+      background-color: #ffd700;
+      color: #000;
+      border: none;
+      padding: 14px 28px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.3s;
+      width: 100%;
+    }
+    button:hover:not(:disabled) {
+      background-color: #ffed4e;
+      transform: scale(1.02);
+    }
+    button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+    #message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 15px;
+      display: none;
+    }
+    #message.show { display: block; }
+    #message.info {
+      background: #1e3a5f;
+      color: #5dade2;
+    }
+    #message.success {
+      background: #1e4d2b;
+      color: #52c41a;
+    }
+    #message.error {
+      background: #4d1e1e;
+      color: #ff6b6b;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #333;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+    .progress-bar.show { display: block; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ffd5, #ffd700);
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .result-box {
+      background: #232323;
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid #00ffd5;
+      margin-top: 30px;
+      display: none;
+    }
+    .result-box.show { display: block; }
+    .result-box h4 {
+      color: #ffd700;
+      margin-top: 0;
+    }
+    .preview-container {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .preview-container img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .copy-btn {
+      background: #00ffd5;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+      width: auto;
+    }
+    .copy-btn:hover {
+      background: #00e6c3;
+    }
+    #debugLog {
+      background: #0a0a0a;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      display: none;
+    }
+    #debugLog.show { display: block; }
+    #hiddenRender {
+      position: fixed;
+      left: -10000px;
+      top: 0;
+    }
+    
+    /* 렌더링 스타일 */
+    .combined-render {
+      width: 720px;
+      background: #000000;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans KR', Arial, sans-serif;
+    }
+    .header-section {
+      width: 720px;
+      height: 400px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+      color: #ffffff;
+      padding: 30px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .shop-title {
+      font-size: 42px;
+      font-weight: 900;
+      text-align: center;
+      margin: 25px 0 15px 0;
+      letter-spacing: 3px;
+    }
+    .frame-1 .shop-title {
+      background: linear-gradient(45deg, #ffd700, #ffb347, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .frame-2 .shop-title {
+      background: linear-gradient(90deg, #ffb347, #ff8c00, #ff6347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .frame-3 .shop-title {
+      background: linear-gradient(135deg, #ff8c00, #ff6347, #ff4500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .frame-4 .shop-title {
+      background: linear-gradient(180deg, #ff6347, #ff4500, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .icon {
+      display: inline-block;
+      margin: 0 10px;
+      font-size: 38px;
+    }
+    .frame-1 .icon { transform: scale(1.0); }
+    .frame-2 .icon { transform: scale(1.05); }
+    .frame-3 .icon { transform: scale(1.1); }
+    .frame-4 .icon { transform: scale(1.05); }
+    .shop-subtitle {
+      text-align: center;
+      font-size: 19px;
+      color: #cccccc;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    .subtitle-divider {
+      border: none;
+      border-top: 1px solid #444444;
+      margin: 20px auto;
+      width: 85%;
+    }
+    .info-list {
+      list-style: none;
+      padding: 0;
+      margin: 25px 0;
+      text-align: center;
+    }
+    .info-list li {
+      font-size: 17px;
+      margin: 12px 0;
+      color: #ffffff;
+      font-weight: 500;
+    }
+    .info-list .icon {
+      margin-right: 12px;
+      font-size: 22px;
+    }
+    .cta-btn {
+      text-align: center;
+      font-size: 23px;
+      font-weight: 800;
+      padding: 18px 45px;
+      margin: 25px auto;
+      border-radius: 16px;
+      border: 2px solid transparent;
+      max-width: 450px;
+    }
+    .frame-1 .cta-btn {
+      background: linear-gradient(45deg, #4169e1, #6a5acd, #8a2be2);
+      box-shadow: 0 0 20px rgba(65, 105, 225, 0.5);
+    }
+    .frame-2 .cta-btn {
+      background: linear-gradient(90deg, #6a5acd, #8a2be2, #9370db);
+      box-shadow: 0 0 22px rgba(106, 90, 205, 0.6);
+    }
+    .frame-3 .cta-btn {
+      background: linear-gradient(135deg, #8a2be2, #9370db, #ba55d3);
+      box-shadow: 0 0 25px rgba(138, 43, 226, 0.7);
+    }
+    .frame-4 .cta-btn {
+      background: linear-gradient(180deg, #9370db, #ba55d3, #4169e1);
+      box-shadow: 0 0 22px rgba(147, 112, 219, 0.6);
+    }
+    .frame-1 .info-list li:nth-child(1) .icon { color: #ff6666; transform: scale(1.15); }
+    .frame-2 .info-list li:nth-child(2) .icon { color: #66ff66; transform: scale(1.15); }
+    .frame-3 .info-list li:nth-child(3) .icon { color: #6666ff; transform: scale(1.15); }
+    .frame-4 .info-list li:nth-child(4) .icon { color: #ffff66; transform: scale(1.15); }
+    .price-section {
+      width: 720px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 40px 45px;
+    }
+    .section-price-title {
+      font-size: 34px;
+      color: #3dffb8;
+      font-weight: 900;
+      margin-bottom: 25px;
+      margin-top: 0;
+      letter-spacing: 1.5px;
+      text-align: center;
+      text-shadow: 0 0 12px rgba(61, 255, 184, 0.5);
+    }
+    .description {
+      font-size: 19px;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 25px;
+      text-align: center;
+      font-weight: 500;
+      white-space: pre-wrap;
+      margin: 0;
+      line-height: 1.8;
+      letter-spacing: 0.5px;
+    }
+    .tb-tagline {
+      margin: 8px 0;
+      padding: 8px 0;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>🦇 THE BLACK SHOP - WebP 애니메이션 생성기</h2>
+    
+    <div class="section">
+      <h3>📝 가격표 텍스트 입력</h3>
+      <div class="config-note">
+        💡 <strong>주의:</strong> Vercel API 주소를 설정하지 않으면 작동하지 않습니다!<br>
+        배포 후 아래 JavaScript의 <code>API_URL</code>을 수정하세요.
+      </div>
+      <textarea id="priceText" placeholder="여기에 가격표 텍스트를 입력하세요...
+
+예시:
+⚔️ 시즌10 버스 서비스
+-------------------
+🏆 랭크 버스
+- 골드 → 플래티넘: 50,000원
+-------------------
+🎯 던전 대리
+- 나이트메어: 30,000원/시간
+"></textarea>
+      <button id="generateBtn" onclick="startGeneration()">🎨 WebP 애니메이션 생성</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+
+    <div id="message"></div>
+    
+    <div class="result-box" id="resultBox">
+      <h4>✅ 생성 완료!</h4>
+      
+      <div class="preview-container">
+        <h5 style="color: #ffd700;">🎬 WebP 애니메이션</h5>
+        <img id="webpPreview" src="" alt="WebP 미리보기" />
+        <br>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
+        <button class="copy-btn" onclick="downloadImage()">다운로드</button>
+      </div>
+    </div>
+
+    <div id="debugLog"></div>
+  </div>
+
+  <div id="hiddenRender"></div>
+
+  <script>
+    // ⚠️ 중요: Vercel 배포 후 이 URL을 변경하세요!
+    const API_URL = '/api/create-webp';  // Vercel 배포시 자동으로 작동
+    // 또는 전체 URL: 'https://your-project.vercel.app/api/create-webp'
+    
+    const supabaseUrl = "https://ssnmitgehgzzcpmqwhzt.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzbm1pdGdlaGd6emNwbXF3aHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjI1MDgsImV4cCI6MjA2ODkzODUwOH0.u3FrSDh5qYeccQmn0PkOs4nfqIhXLSFHhpWj2JXhTrA";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    
+    const chatUrl = "https://open.kakao.com/o/gUVp9cwh";
+    let webpUrl = "";
+
+    function log(message) {
+      const debugLog = document.getElementById('debugLog');
+      const timestamp = new Date().toLocaleTimeString();
+      debugLog.innerHTML += `[${timestamp}] ${message}<br>`;
+      debugLog.scrollTop = debugLog.scrollHeight;
+      debugLog.classList.add('show');
+      console.log(`[MAIN] ${message}`);
+    }
+
+    function showMessage(text, type = 'info') {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'show ' + type;
+    }
+
+    function updateProgress(percent, text) {
+      const fill = document.getElementById('progressFill');
+      fill.style.width = percent + '%';
+      fill.textContent = percent + '% - ' + text;
+      document.getElementById('progressBar').classList.add('show');
+    }
+
+    function insertChatLinks(text, chatUrl) {
+      const escapeHTML = (s) => s.replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+      
+      const palette = ['#00FFD5', '#FFD166', '#FF6B6B', '#7C5CFF', '#7CF17F'];
+      const pickColor = (i) => palette[i % palette.length];
+
+      const dividerClass = "[\-\*=~_─━—–－＿ㅡ]";
+      const splitRe = new RegExp(`(${dividerClass}{3,})`, 'g');
+      const tokens = text.split(splitRe);
+      const dividerIdxs = [];
+      
+      for (let i = 1; i < tokens.length; i += 2) dividerIdxs.push(i);
+
+      let chosen = [];
+      if (dividerIdxs.length > 0) {
+        const candidates = [
+          Math.floor(dividerIdxs.length / 4),
+          Math.floor(dividerIdxs.length / 2),
+          Math.floor(3 * dividerIdxs.length / 4)
+        ];
+        const seen = new Set();
+        chosen = candidates
+          .map(ix => dividerIdxs[Math.max(0, Math.min(dividerIdxs.length - 1, ix))])
+          .filter(i => Number.isInteger(i) && !seen.has(i) && (seen.add(i), true));
+      }
+
+      let extraNeeded = Math.max(0, 3 - chosen.length);
+      let tagCount = 0;
+      
+      const makeTag = () => {
+        const color = pickColor(tagCount++);
+        return `<div class="tb-tagline" style="font-weight:800;color:${color};">#디아블로4 THEBLACK 오픈채팅링크확인 → <span style="text-decoration:underline;">${escapeHTML(chatUrl)}</span></div>`;
+      };
+
+      let html = '';
+      for (let i = 0; i < tokens.length; i++) {
+        if (i % 2 === 0) {
+          html += escapeHTML(tokens[i]);
+        } else {
+          if (chosen.includes(i)) {
+            html += `\n${makeTag()}\n`;
+          } else {
+            html += `\n${escapeHTML(tokens[i])}\n`;
+          }
+        }
+      }
+
+      while (extraNeeded-- > 0) {
+        html += `\n-----------------------------------------\n${makeTag()}\n`;
+      }
+
+      return html;
+    }
+
+    async function startGeneration() {
+      const text = document.getElementById('priceText').value.trim();
+      if (!text) {
+        showMessage('가격표 텍스트를 입력해주세요!', 'error');
+        return;
+      }
+
+      log('=== WebP 애니메이션 생성 시작 ===');
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('resultBox').classList.remove('show');
+      
+      try {
+        updateProgress(10, 'DB 저장 중...');
+        const { error } = await supabase
+          .from("user_texts")
+          .upsert({ user_id: "theblack04", main_text: text }, { onConflict: "user_id" });
+
+        if (error) throw error;
+        log('텍스트 저장 완료');
+
+        updateProgress(20, '4개 프레임 렌더링 중...');
+        showMessage('WebP 애니메이션 생성 중... 10~15초 소요됩니다!', 'info');
+        
+        const frames = await generateAllFrames(text);
+        
+        updateProgress(70, 'Vercel API로 WebP 생성 중...');
+        log('Vercel API 호출');
+        
+        const webpDataUrl = await createWebPViaAPI(frames);
+        
+        updateProgress(90, 'Supabase 업로드 중...');
+        await uploadWebPToSupabase(webpDataUrl);
+        
+        updateProgress(100, '완료!');
+        showMessage('✅ WebP 애니메이션 생성 완료!', 'success');
+        document.getElementById('resultBox').classList.add('show');
+        log('=== 작업 완료 ===');
+
+      } catch (err) {
+        log('ERROR: ' + err.message);
+        showMessage('❌ 오류 발생: ' + err.message, 'error');
+      } finally {
+        document.getElementById('generateBtn').disabled = false;
+      }
+    }
+
+    async function generateAllFrames(priceText) {
+      const frames = [];
+      const priceHtml = insertChatLinks(priceText, chatUrl);
+      
+      for (let i = 1; i <= 4; i++) {
+        log(`프레임 ${i} 렌더링 중...`);
+        updateProgress(20 + (i * 10), `프레임 ${i}/4 렌더링 중...`);
+        
+        const frameHtml = `
+          <div class="combined-render frame-${i}">
+            <div class="header-section">
+              <div>
+                <h1 class="shop-title">
+                  <span class="icon">🦇</span> THE BLACK SHOP <span class="icon">🧛‍♂️</span>
+                </h1>
+                <div class="shop-subtitle">디아블로4 시즌10 버스 · 대리 · 아이템 전문 거래소</div>
+                <hr class="subtitle-divider">
+              </div>
+              <ul class="info-list">
+                <li><span class="icon">🦾</span>모든 장비, 아이템, 재료 완비</li>
+                <li><span class="icon">🚌</span>버스, 대리, 세팅 풀 지원</li>
+                <li><span class="icon">🦸‍♂️</span>경험 많은 전문 기사 상시 대기</li>
+                <li><span class="icon">🔥</span>합리적인 실시간 최저가 보장</li>
+              </ul>
+              <div class="cta-btn">💬 오픈채팅은 가격표 클릭!</div>
+            </div>
+            <div class="price-section">
+              <h2 class="section-price-title">💰 실시간 가격표</h2>
+              <div class="description">${priceHtml}</div>
+            </div>
+          </div>
+        `;
+        
+        const container = document.getElementById('hiddenRender');
+        container.innerHTML = frameHtml;
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const target = container.querySelector('.combined-render');
+        const canvas = await html2canvas(target, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#000000',
+          scale: 1,
+          logging: false,
+          width: 720
+        });
+        
+        frames.push(canvas.toDataURL('image/png'));
+        log(`프레임 ${i} 캡처 완료`);
+      }
+      
+      return frames;
+    }
+
+    async function createWebPViaAPI(frames) {
+      log('Vercel API 요청 시작');
+      
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ frames: frames })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'WebP 생성 실패');
+      }
+
+      log(`WebP 생성 완료 (크기: ${(result.size / 1024).toFixed(2)} KB)`);
+      return result.webp;
+    }
+
+    async function uploadWebPToSupabase(dataUrl) {
+      log('Supabase 업로드 시작');
+      
+      const blob = await (await fetch(dataUrl)).blob();
+      await supabase.storage.from("changong-images").remove(['theblack_animated.webp']);
+
+      const { error } = await supabase.storage
+        .from("changong-images")
+        .upload('theblack_animated.webp', blob, {
+          contentType: 'image/webp',
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      webpUrl = supabase.storage
+        .from("changong-images")
+        .getPublicUrl('theblack_animated.webp').data.publicUrl;
+
+      log(`업로드 완료: ${webpUrl}`);
+      document.getElementById('webpPreview').src = webpUrl + '?t=' + Date.now();
+    }
+
+    function copyUrl() {
+      navigator.clipboard.writeText(webpUrl);
+      alert('URL이 복사되었습니다!\n' + webpUrl);
+    }
+
+    function downloadImage() {
+      const a = document.createElement('a');
+      a.href = webpUrl;
+      a.download = 'theblack_animated.webp';
+      a.click();
+    }
+  </script>
+</body>
+</html>
