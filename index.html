@@ -560,12 +560,12 @@
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#000000',
-          scale: 1,
+          scale: 0.8,
           logging: false,
           width: 720
         });
         
-        frames.push(canvas.toDataURL('image/png'));
+        frames.push(canvas.toDataURL('image/jpeg', 0.85));
         log(`프레임 ${i} 캡처 완료`);
       }
       
