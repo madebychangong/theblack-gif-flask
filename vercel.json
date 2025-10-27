@@ -1,7 +1,25 @@
 {
-  "functions": {
-    "api/create-webp.py": {
-      "runtime": "python3.9"
+  "builds": [
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/$1"
+    }
+  ]
 }
+```
+
+4. "Commit new file"
+
+---
+
+### **또는 requirements.txt 확인**
+
+`requirements.txt` 파일을 클릭해서 내용이 이렇게 되어있는지 확인:
+```
+Pillow==10.1.0
