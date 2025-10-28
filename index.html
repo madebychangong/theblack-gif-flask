@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>더블랙샵 - WebP 애니메이션 생성기</title>
+  <title>더블랙샵 - WebP 애니메이션 생성기 (워터마크 자동)</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -36,6 +36,17 @@
     .section h3 {
       color: #00ffd5;
       margin-top: 0;
+    }
+    .info-box {
+      background: rgba(0, 255, 213, 0.1);
+      border: 2px solid #00ffd5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    .info-box strong {
+      color: #00ffd5;
     }
     textarea {
       width: 100%;
@@ -173,24 +184,124 @@
       top: 0;
     }
     
-    /* 가격표 디자인 */
+    /* ============================================
+       💧 워터마크 시스템 (자동 적용)
+       ⚠️ 이 부분은 수정하지 마세요!
+       ============================================ */
+    
+    .watermark-container {
+      position: relative;
+      width: 720px;
+    }
+    
+    /* 4개 모서리 배지 */
+    .corner-badge {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 50%;
+      border: 3px solid;
+      text-align: center;
+      line-height: 1.2;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    
+    .corner-badge.top-left { top: 15px; left: 15px; }
+    .corner-badge.top-right { top: 15px; right: 15px; }
+    .corner-badge.bottom-left { bottom: 15px; left: 15px; }
+    .corner-badge.bottom-right { bottom: 15px; right: 15px; }
+    
+    /* 가격표 내부 워터마크 (대각선 3개) */
+    .content-watermark {
+      position: absolute;
+      font-size: 18px;
+      font-weight: 900;
+      opacity: 0.2;
+      pointer-events: none;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      z-index: 500;
+    }
+    
+    .wm-diagonal-1 { top: 30%; left: 10%; transform: rotate(-15deg); }
+    .wm-diagonal-2 { top: 50%; right: 15%; transform: rotate(15deg); }
+    .wm-diagonal-3 { top: 70%; left: 15%; transform: rotate(-12deg); }
+    
+    /* 하단 중앙 스티커 */
+    .center-sticker {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      border: 3px solid;
+      border-radius: 12px;
+      padding: 15px 25px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
+      z-index: 1000;
+    }
+    
+    .sticker-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin: 0 0 8px 0;
+      letter-spacing: 2px;
+    }
+    
+    .sticker-check {
+      font-size: 24px;
+      margin: 5px 0;
+    }
+    
+    .sticker-desc {
+      font-size: 13px;
+      font-weight: 700;
+      margin: 5px 0 0 0;
+      line-height: 1.4;
+    }
+    
+    /* 프레임별 색상 (자동 적용) */
+    .frame-1 .corner-badge { background: #ffd700; border-color: #ffd700; color: #000; }
+    .frame-1 .content-watermark { color: #ffd700; }
+    .frame-1 .center-sticker { border-color: #ffd700; }
+    .frame-1 .sticker-title, .frame-1 .sticker-check, .frame-1 .sticker-desc { color: #ffd700; }
+    .frame-1 .auth-warning { border-color: #ffd700; color: #ffd700; }
+    
+    .frame-2 .corner-badge { background: #00ffd5; border-color: #00ffd5; color: #000; }
+    .frame-2 .content-watermark { color: #00ffd5; }
+    .frame-2 .center-sticker { border-color: #00ffd5; }
+    .frame-2 .sticker-title, .frame-2 .sticker-check, .frame-2 .sticker-desc { color: #00ffd5; }
+    .frame-2 .auth-warning { border-color: #00ffd5; color: #00ffd5; }
+    
+    .frame-3 .corner-badge { background: #a855f7; border-color: #a855f7; color: #000; }
+    .frame-3 .content-watermark { color: #a855f7; }
+    .frame-3 .center-sticker { border-color: #a855f7; }
+    .frame-3 .sticker-title, .frame-3 .sticker-check, .frame-3 .sticker-desc { color: #a855f7; }
+    .frame-3 .auth-warning { border-color: #a855f7; color: #a855f7; }
+    
+    .frame-4 .corner-badge { background: #ff6b6b; border-color: #ff6b6b; color: #000; }
+    .frame-4 .content-watermark { color: #ff6b6b; }
+    .frame-4 .center-sticker { border-color: #ff6b6b; }
+    .frame-4 .sticker-title, .frame-4 .sticker-check, .frame-4 .sticker-desc { color: #ff6b6b; }
+    .frame-4 .auth-warning { border-color: #ff6b6b; color: #ff6b6b; }
+    
+    /* ============================================
+       🎨 디자인 부분 (자유롭게 수정하세요!)
+       ============================================ */
+    
     .price-image {
       width: 720px;
       background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
       margin: 0;
       padding: 0;
       font-family: 'Noto Sans KR', Arial, sans-serif;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .header-static {
-      width: 100%;
-      background: linear-gradient(135deg, #2c003e 0%, #1a1a2e 100%);
-      padding: 35px 40px 30px 40px;
-      text-align: center;
-      border-bottom: 3px solid #ffd700;
-      position: relative;
     }
     
     .auth-warning {
@@ -204,6 +315,14 @@
       text-align: center;
     }
     
+    .header-static {
+      width: 100%;
+      background: linear-gradient(135deg, #2c003e 0%, #1a1a2e 100%);
+      padding: 35px 40px 30px 40px;
+      text-align: center;
+      border-bottom: 3px solid #ffd700;
+    }
+    
     .shop-logo {
       font-size: 46px;
       font-weight: 900;
@@ -212,7 +331,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin: 0 0 12px 0;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     
     .shop-tagline {
@@ -224,8 +342,7 @@
     
     .price-content {
       width: 100%;
-      padding: 35px 40px 40px 40px;
-      position: relative;
+      padding: 35px 40px 80px 40px;
     }
     
     .price-title {
@@ -256,105 +373,6 @@
       padding: 10px 0;
       font-weight: 800;
     }
-    
-    /* 모서리 배지 (4개) */
-    .corner-badge {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 900;
-      border-radius: 50%;
-      border: 3px solid;
-      text-align: center;
-      line-height: 1.2;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    
-    .corner-badge.top-left {
-      top: 15px;
-      left: 15px;
-    }
-    
-    .corner-badge.top-right {
-      top: 15px;
-      right: 15px;
-    }
-    
-    .corner-badge.bottom-left {
-      bottom: 15px;
-      left: 15px;
-    }
-    
-    .corner-badge.bottom-right {
-      bottom: 15px;
-      right: 15px;
-    }
-    
-    /* 중앙 스티커 */
-    .center-sticker {
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
-      border: 3px solid;
-      border-radius: 12px;
-      padding: 15px 25px;
-      text-align: center;
-      box-shadow: 0 0 30px rgba(0,0,0,0.7);
-    }
-    
-    .sticker-title {
-      font-size: 20px;
-      font-weight: 900;
-      margin: 0 0 8px 0;
-      letter-spacing: 2px;
-    }
-    
-    .sticker-check {
-      font-size: 24px;
-      margin: 5px 0;
-    }
-    
-    .sticker-desc {
-      font-size: 13px;
-      font-weight: 700;
-      margin: 5px 0 0 0;
-      line-height: 1.4;
-    }
-    
-    /* 프레임별 색상 */
-    .frame-1 .auth-warning { border-color: #ffd700; color: #ffd700; }
-    .frame-1 .corner-badge { background: #ffd700; border-color: #ffd700; color: #000; }
-    .frame-1 .center-sticker { border-color: #ffd700; }
-    .frame-1 .sticker-title { color: #ffd700; }
-    .frame-1 .sticker-check { color: #ffd700; }
-    .frame-1 .sticker-desc { color: #ffd700; }
-    
-    .frame-2 .auth-warning { border-color: #00ffd5; color: #00ffd5; }
-    .frame-2 .corner-badge { background: #00ffd5; border-color: #00ffd5; color: #000; }
-    .frame-2 .center-sticker { border-color: #00ffd5; }
-    .frame-2 .sticker-title { color: #00ffd5; }
-    .frame-2 .sticker-check { color: #00ffd5; }
-    .frame-2 .sticker-desc { color: #00ffd5; }
-    
-    .frame-3 .auth-warning { border-color: #a855f7; color: #a855f7; }
-    .frame-3 .corner-badge { background: #a855f7; border-color: #a855f7; color: #000; }
-    .frame-3 .center-sticker { border-color: #a855f7; }
-    .frame-3 .sticker-title { color: #a855f7; }
-    .frame-3 .sticker-check { color: #a855f7; }
-    .frame-3 .sticker-desc { color: #a855f7; }
-    
-    .frame-4 .auth-warning { border-color: #ff6b6b; color: #ff6b6b; }
-    .frame-4 .corner-badge { background: #ff6b6b; border-color: #ff6b6b; color: #000; }
-    .frame-4 .center-sticker { border-color: #ff6b6b; }
-    .frame-4 .sticker-title { color: #ff6b6b; }
-    .frame-4 .sticker-check { color: #ff6b6b; }
-    .frame-4 .sticker-desc { color: #ff6b6b; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -362,6 +380,13 @@
 <body>
   <div class="container">
     <h2>🦇 THE BLACK SHOP - WebP 애니메이션 생성기</h2>
+    
+    <div class="info-box">
+      <strong>💧 워터마크 자동 적용 시스템</strong><br>
+      • 디자인을 자유롭게 수정해도 워터마크가 자동으로 적용됩니다<br>
+      • 총 8개 마크: 모서리 4개 + 가격표 내부 3개 + 하단 스티커 1개<br>
+      • 4가지 색상 자동 순환: 금색 → 청록 → 보라 → 빨강
+    </div>
     
     <div class="section">
       <h3>📝 가격표 텍스트 입력</h3>
@@ -389,10 +414,10 @@
       <h4>✅ 생성 완료!</h4>
       
       <div class="preview-container">
-        <h5 style="color: #ffd700;">🎬 WebP 애니메이션 (5개 마크 동시 색변화)</h5>
+        <h5 style="color: #ffd700;">🎬 WebP 애니메이션 (8개 마크 자동 적용)</h5>
         <img id="webpPreview" src="" alt="WebP 미리보기" />
         <br>
-        <p style="color: #aaa; font-size: 14px;">💫 5개 마크가 동시에 색변화하면 공식입니다!</p>
+        <p style="color: #aaa; font-size: 14px;">💫 8개 마크가 동시에 색변화하면 공식입니다!</p>
         <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
         <button class="copy-btn" onclick="downloadImage()">다운로드</button>
       </div>
@@ -433,6 +458,32 @@
       fill.style.width = percent + '%';
       fill.textContent = percent + '% - ' + text;
       document.getElementById('progressBar').classList.add('show');
+    }
+
+    // ============================================
+    // 💧 워터마크 HTML 생성 함수 (자동)
+    // ⚠️ 이 함수는 수정하지 마세요!
+    // ============================================
+    function getWatermarkHTML() {
+      return `
+        <!-- 4개 모서리 배지 -->
+        <div class="corner-badge top-left">✓<br>공식</div>
+        <div class="corner-badge top-right">✓<br>인증</div>
+        <div class="corner-badge bottom-left">✓<br>정품</div>
+        <div class="corner-badge bottom-right">✓<br>공식</div>
+        
+        <!-- 가격표 내부 대각선 워터마크 3개 -->
+        <div class="content-watermark wm-diagonal-1">OFFICIAL ✓</div>
+        <div class="content-watermark wm-diagonal-2">OFFICIAL ✓</div>
+        <div class="content-watermark wm-diagonal-3">OFFICIAL ✓</div>
+        
+        <!-- 하단 중앙 스티커 -->
+        <div class="center-sticker">
+          <div class="sticker-title">OFFICIAL</div>
+          <div class="sticker-check">✓ ✓ ✓</div>
+          <div class="sticker-desc">색변화 = 진품<br>정지 = 가짜</div>
+        </div>
+      `;
     }
 
     function insertChatLinks(text, chatUrl) {
@@ -491,6 +542,26 @@
       return html;
     }
 
+    // ============================================
+    // 🎨 디자인 HTML 생성 함수 (자유롭게 수정!)
+    // ============================================
+    function getDesignHTML(priceHtml) {
+      return `
+        <div class="header-static">
+          <div class="auth-warning">
+            ⚠️ 진위확인: 8개 마크가 동시에 색변화하면 공식!
+          </div>
+          <h1 class="shop-logo">🦇 THE BLACK SHOP 🧛‍♂️</h1>
+          <p class="shop-tagline">디아블로4 시즌10 버스 · 대리 · 아이템 전문</p>
+        </div>
+        
+        <div class="price-content">
+          <h2 class="price-title">💰 실시간 가격표</h2>
+          <div class="price-text">${priceHtml}</div>
+        </div>
+      `;
+    }
+
     async function startGeneration() {
       const text = document.getElementById('priceText').value.trim();
       if (!text) {
@@ -545,33 +616,11 @@
         log(`프레임 ${i} 렌더링 중...`);
         updateProgress(20 + (i * 10), `프레임 ${i}/4 렌더링 중...`);
         
+        // 워터마크 + 디자인 자동 합성
         const frameHtml = `
-          <div class="price-image frame-${i}">
-            <!-- 4개 모서리 배지 -->
-            <div class="corner-badge top-left">✓<br>공식</div>
-            <div class="corner-badge top-right">✓<br>인증</div>
-            <div class="corner-badge bottom-left">✓<br>정품</div>
-            <div class="corner-badge bottom-right">✓<br>공식</div>
-            
-            <div class="header-static">
-              <div class="auth-warning">
-                ⚠️ 진위확인: 5개 마크가 동시에 색변화하면 공식!
-              </div>
-              <h1 class="shop-logo">🦇 THE BLACK SHOP 🧛‍♂️</h1>
-              <p class="shop-tagline">디아블로4 시즌10 버스 · 대리 · 아이템 전문</p>
-            </div>
-            
-            <div class="price-content">
-              <h2 class="price-title">💰 실시간 가격표</h2>
-              <div class="price-text">${priceHtml}</div>
-              
-              <!-- 중앙 스티커 -->
-              <div class="center-sticker">
-                <div class="sticker-title">OFFICIAL</div>
-                <div class="sticker-check">✓ ✓ ✓</div>
-                <div class="sticker-desc">색변화 = 진품<br>정지 = 가짜</div>
-              </div>
-            </div>
+          <div class="watermark-container price-image frame-${i}">
+            ${getWatermarkHTML()}
+            ${getDesignHTML(priceHtml)}
           </div>
         `;
         
@@ -580,7 +629,7 @@
         
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const target = container.querySelector('.price-image');
+        const target = container.querySelector('.watermark-container');
         const canvas = await html2canvas(target, {
           useCORS: true,
           allowTaint: true,
