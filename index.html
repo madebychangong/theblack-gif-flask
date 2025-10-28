@@ -486,60 +486,14 @@
       `;
     }
 
+    // 오픈채팅 자동 삽입 기능 제거 (해시태그로 대체)
     function insertChatLinks(text, chatUrl) {
       const escapeHTML = (s) => s.replace(/[&<>"']/g, m => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
       }[m]));
       
-      const palette = ['#00FFD5', '#FFD166', '#FF6B6B', '#7C5CFF', '#7CF17F'];
-      const pickColor = (i) => palette[i % palette.length];
-
-      const dividerClass = "[\-\*=~_─━—–－＿ㅡ]";
-      const splitRe = new RegExp(`(${dividerClass}{3,})`, 'g');
-      const tokens = text.split(splitRe);
-      const dividerIdxs = [];
-      
-      for (let i = 1; i < tokens.length; i += 2) dividerIdxs.push(i);
-
-      let chosen = [];
-      if (dividerIdxs.length > 0) {
-        const candidates = [
-          Math.floor(dividerIdxs.length / 4),
-          Math.floor(dividerIdxs.length / 2),
-          Math.floor(3 * dividerIdxs.length / 4)
-        ];
-        const seen = new Set();
-        chosen = candidates
-          .map(ix => dividerIdxs[Math.max(0, Math.min(dividerIdxs.length - 1, ix))])
-          .filter(i => Number.isInteger(i) && !seen.has(i) && (seen.add(i), true));
-      }
-
-      let extraNeeded = Math.max(0, 3 - chosen.length);
-      let tagCount = 0;
-      
-      const makeTag = () => {
-        const color = pickColor(tagCount++);
-        return `<div class="chat-link" style="color:${color};">#디아블로4 THEBLACK 오픈채팅 → ${escapeHTML(chatUrl)}</div>`;
-      };
-
-      let html = '';
-      for (let i = 0; i < tokens.length; i++) {
-        if (i % 2 === 0) {
-          html += escapeHTML(tokens[i]);
-        } else {
-          if (chosen.includes(i)) {
-            html += `\n${makeTag()}\n`;
-          } else {
-            html += `\n${escapeHTML(tokens[i])}\n`;
-          }
-        }
-      }
-
-      while (extraNeeded-- > 0) {
-        html += `\n-----------------------------------------\n${makeTag()}\n`;
-      }
-
-      return html;
+      // 단순히 HTML 이스케이프만 수행
+      return escapeHTML(text);
     }
 
     // ============================================
