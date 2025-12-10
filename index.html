@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>더블랙샵 - WebP 애니메이션 생성기 (워터마크 자동)</title>
+  <title>더블랙샵 - 통합 도구</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -11,32 +11,96 @@
       font-family: 'Noto Sans KR', Arial, sans-serif;
       background-color: #121212;
       color: #fff;
-      padding: 40px 20px;
+      padding: 20px;
       margin: 0;
     }
+
+    /* ============================================
+       탭 네비게이션
+       ============================================ */
+    .tab-navigation {
+      max-width: 1400px;
+      margin: 0 auto 20px auto;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    .tab-btn {
+      flex: 1;
+      max-width: 400px;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: 700;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #aaa;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+      background: #333;
+      border-color: #555;
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      border-color: #ffd700;
+      color: #000;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ============================================
+       공통 스타일
+       ============================================ */
     .container {
-      max-width: 900px;
+      max-width: 1400px;
       margin: 0 auto;
       background: #1e1e1e;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(255,255,255,0.1);
     }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #4CAF50;
+    }
+
     h2 {
       color: #ffd700;
       text-align: center;
       margin-bottom: 30px;
     }
+
     .section {
       background: #2a2a2a;
       padding: 20px;
       border-radius: 8px;
       margin-bottom: 20px;
     }
+
     .section h3 {
       color: #00ffd5;
       margin-top: 0;
     }
+
     .info-box {
       background: rgba(0, 255, 213, 0.1);
       border: 2px solid #00ffd5;
@@ -45,12 +109,14 @@
       margin-bottom: 15px;
       font-size: 14px;
     }
+
     .info-box strong {
       color: #00ffd5;
     }
+
     textarea {
       width: 100%;
-      height: 200px;
+      min-height: 200px;
       padding: 16px;
       font-size: 16px;
       background: #333;
@@ -61,6 +127,7 @@
       line-height: 1.6;
       font-family: 'Noto Sans KR', monospace;
     }
+
     button {
       margin-top: 15px;
       background-color: #ffd700;
@@ -74,15 +141,43 @@
       transition: all 0.3s;
       width: 100%;
     }
+
     button:hover:not(:disabled) {
       background-color: #ffed4e;
       transform: scale(1.02);
     }
+
     button:disabled {
       background-color: #666;
       cursor: not-allowed;
       transform: scale(1);
     }
+
+    label {
+      display: block;
+      margin: 15px 0;
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      border: 2px solid #444;
+      border-radius: 5px;
+      margin-left: 10px;
+    }
+
+    input[type="text"] {
+      width: 400px;
+    }
+
+    input[type="number"] {
+      width: 80px;
+    }
+
+    /* ============================================
+       탭1: WebP 생성기 스타일
+       ============================================ */
     #message {
       margin-top: 20px;
       padding: 15px;
@@ -91,6 +186,7 @@
       font-size: 15px;
       display: none;
     }
+
     #message.show { display: block; }
     #message.info {
       background: #1e3a5f;
@@ -104,6 +200,7 @@
       background: #4d1e1e;
       color: #ff6b6b;
     }
+
     .progress-bar {
       width: 100%;
       height: 30px;
@@ -113,7 +210,9 @@
       margin: 20px 0;
       display: none;
     }
+
     .progress-bar.show { display: block; }
+
     .progress-fill {
       height: 100%;
       background: linear-gradient(90deg, #00ffd5, #ffd700);
@@ -126,6 +225,7 @@
       font-weight: bold;
       font-size: 14px;
     }
+
     .result-box {
       background: #232323;
       padding: 20px;
@@ -134,11 +234,14 @@
       margin-top: 30px;
       display: none;
     }
+
     .result-box.show { display: block; }
+
     .result-box h4 {
       color: #ffd700;
       margin-top: 0;
     }
+
     .preview-container {
       background: #1a1a1a;
       padding: 15px;
@@ -146,11 +249,13 @@
       margin: 15px 0;
       text-align: center;
     }
+
     .preview-container img {
       max-width: 100%;
       border-radius: 8px;
       margin: 10px 0;
     }
+
     .copy-btn {
       background: #00ffd5;
       color: #000;
@@ -162,9 +267,11 @@
       margin: 5px;
       width: auto;
     }
+
     .copy-btn:hover {
       background: #00e6c3;
     }
+
     #debugLog {
       background: #0a0a0a;
       color: #0f0;
@@ -177,24 +284,21 @@
       margin-top: 20px;
       display: none;
     }
+
     #debugLog.show { display: block; }
+
     #hiddenRender {
       position: fixed;
       left: -10000px;
       top: 0;
     }
-    
-    /* ============================================
-       💧 워터마크 시스템 (자동 적용)
-       ⚠️ 이 부분은 수정하지 마세요!
-       ============================================ */
-    
+
+    /* 워터마크 시스템 */
     .watermark-container {
       position: relative;
       width: 720px;
     }
-    
-    /* 4개 모서리 배지 */
+
     .corner-badge {
       position: absolute;
       width: 60px;
@@ -211,13 +315,12 @@
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
       z-index: 1000;
     }
-    
+
     .corner-badge.top-left { top: 15px; left: 15px; }
     .corner-badge.top-right { top: 15px; right: 15px; }
     .corner-badge.bottom-left { bottom: 15px; left: 15px; }
     .corner-badge.bottom-right { bottom: 15px; right: 15px; }
-    
-    /* 가격표 내부 워터마크 (대각선 3개) */
+
     .content-watermark {
       position: absolute;
       font-size: 18px;
@@ -228,17 +331,16 @@
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       z-index: 500;
     }
-    
+
     .wm-diagonal-1 { top: 30%; left: 10%; transform: rotate(-15deg); }
     .wm-diagonal-2 { top: 50%; right: 15%; transform: rotate(15deg); }
     .wm-diagonal-3 { top: 70%; left: 15%; transform: rotate(-12deg); }
     .wm-diagonal-4 { top: 55%; right: 8%; transform: rotate(10deg); }
-.wm-diagonal-5 { top: 65%; left: 10%; transform: rotate(-12deg); }
-.wm-diagonal-6 { top: 75%; right: 12%; transform: rotate(14deg); }
-.wm-diagonal-7 { top: 82%; left: 8%; transform: rotate(-8deg); }
-.wm-diagonal-8 { top: 90%; right: 10%; transform: rotate(12deg); }
-    
-    /* 하단 중앙 스티커 */
+    .wm-diagonal-5 { top: 65%; left: 10%; transform: rotate(-12deg); }
+    .wm-diagonal-6 { top: 75%; right: 12%; transform: rotate(14deg); }
+    .wm-diagonal-7 { top: 82%; left: 8%; transform: rotate(-8deg); }
+    .wm-diagonal-8 { top: 90%; right: 10%; transform: rotate(12deg); }
+
     .center-sticker {
       position: absolute;
       bottom: 25px;
@@ -252,68 +354,63 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.7);
       z-index: 1000;
     }
-    
+
     .sticker-title {
       font-size: 20px;
       font-weight: 900;
       margin: 0 0 8px 0;
       letter-spacing: 2px;
     }
-    
+
     .sticker-check {
       font-size: 24px;
       margin: 5px 0;
     }
-    
+
     .sticker-desc {
       font-size: 13px;
       font-weight: 700;
       margin: 5px 0 0 0;
       line-height: 1.4;
     }
-    
-    /* 프레임별 색상 (자동 적용) */
+
     .frame-1 .corner-badge { background: #ffd700; border-color: #ffd700; color: #000; }
     .frame-1 .content-watermark { color: #ffd700; }
     .frame-1 .center-sticker { border-color: #ffd700; }
     .frame-1 .sticker-title, .frame-1 .sticker-check, .frame-1 .sticker-desc { color: #ffd700; }
     .frame-1 .auth-warning { border-color: #ffd700; color: #ffd700; }
-    
+
     .frame-2 .corner-badge { background: #00ffd5; border-color: #00ffd5; color: #000; }
     .frame-2 .content-watermark { color: #00ffd5; }
     .frame-2 .center-sticker { border-color: #00ffd5; }
     .frame-2 .sticker-title, .frame-2 .sticker-check, .frame-2 .sticker-desc { color: #00ffd5; }
     .frame-2 .auth-warning { border-color: #00ffd5; color: #00ffd5; }
-    
+
     .frame-3 .corner-badge { background: #a855f7; border-color: #a855f7; color: #000; }
     .frame-3 .content-watermark { color: #a855f7; }
     .frame-3 .center-sticker { border-color: #a855f7; }
     .frame-3 .sticker-title, .frame-3 .sticker-check, .frame-3 .sticker-desc { color: #a855f7; }
     .frame-3 .auth-warning { border-color: #a855f7; color: #a855f7; }
-    
+
     .frame-4 .corner-badge { background: #ff6b6b; border-color: #ff6b6b; color: #000; }
     .frame-4 .content-watermark { color: #ff6b6b; }
     .frame-4 .center-sticker { border-color: #ff6b6b; }
     .frame-4 .sticker-title, .frame-4 .sticker-check, .frame-4 .sticker-desc { color: #ff6b6b; }
     .frame-4 .auth-warning { border-color: #ff6b6b; color: #ff6b6b; }
-    
-    /* ============================================
-       🎨 디자인 부분 (자유롭게 수정하세요!)
-       ============================================ */
-    
+
     .price-image {
       width: 720px;
-      background: linear-gradient(135deg, 
-        #1a1a2e 0%, 
-        #16213e 25%, 
-        #0f3460 50%, 
-        #533483 75%, 
+      background: linear-gradient(135deg,
+        #1a1a2e 0%,
+        #16213e 25%,
+        #0f3460 50%,
+        #533483 75%,
         #1a1a2e 100%);
       margin: 0;
       padding: 0;
       font-family: 'Noto Sans KR', Arial, sans-serif;
     }
-    
+
     .auth-warning {
       background: rgba(255, 215, 0, 0.15);
       border: 2px solid;
@@ -324,7 +421,7 @@
       font-weight: 700;
       text-align: center;
     }
-    
+
     .header-static {
       width: 100%;
       background: rgba(0, 0, 0, 0.15);
@@ -332,22 +429,22 @@
       padding: 40px 42px 30px 42px;
       text-align: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 
+      box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
         inset 0 -1px 0 rgba(255, 255, 255, 0.05);
     }
-    
+
     .shop-logo {
       font-size: 46px;
       font-weight: 700;
       color: #ffe85c;
       margin: 0 0 12px 0;
       letter-spacing: 2.5px;
-      text-shadow: 
+      text-shadow:
         0 0 10px rgba(255, 232, 92, 0.5),
         0 2px 4px rgba(0, 0, 0, 0.3);
     }
-    
+
     .shop-tagline {
       font-size: 20px;
       color: rgba(255, 255, 255, 0.8);
@@ -356,7 +453,7 @@
       margin: 0 0 20px 0;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    
+
     .shop-features {
       list-style: none;
       padding: 0;
@@ -364,14 +461,14 @@
       font-size: 18px;
       color: rgba(255, 255, 255, 0.9);
     }
-    
+
     .shop-features li {
       margin: 8px 0;
       line-height: 1.65;
       letter-spacing: 0.3px;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    
+
     .cta-btn {
       margin: 20px auto;
       background: linear-gradient(135deg, #1affeb 0%, #0ee5d0 100%);
@@ -382,24 +479,24 @@
       border-radius: 22px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       display: inline-block;
-      box-shadow: 
+      box-shadow:
         0 4px 16px rgba(26, 255, 235, 0.3),
         0 2px 4px rgba(0, 0, 0, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
       letter-spacing: 0.5px;
     }
-    
+
     .divider {
       border: none;
       border-top: 1px solid rgba(255, 255, 255, 0.15);
       margin: 20px 40px;
     }
-    
+
     .price-content {
       width: 100%;
       padding: 30px 42px 100px 42px;
     }
-    
+
     .price-title {
       font-size: 32px;
       color: #3dffb8;
@@ -407,11 +504,11 @@
       margin: 0 0 20px 0;
       text-align: center;
       letter-spacing: 1.2px;
-      text-shadow: 
+      text-shadow:
         0 0 10px rgba(61, 255, 184, 0.4),
         0 2px 4px rgba(0, 0, 0, 0.3);
     }
-    
+
     .price-text {
       font-size: 18px;
       color: rgba(255, 255, 255, 0.85);
@@ -427,30 +524,77 @@
       backdrop-filter: blur(10px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
-    
+
     .chat-link {
       margin: 10px 0;
       padding: 10px 0;
       font-weight: 800;
+    }
+
+    /* ============================================
+       탭2: 가격표 변환기 스타일
+       ============================================ */
+    #tab2 .section h2 {
+      color: #66BB6A;
+    }
+
+    .preview-box {
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 5px;
+      min-height: 200px;
+      max-height: 600px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+
+    .warning {
+      background: #3a1a1a;
+      border: 1px solid #ff5252;
+      color: #ffaaaa;
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .emoji-preview {
+      font-size: 20px;
+      margin-left: 10px;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h2>🦇 THE BLACK SHOP - WebP 애니메이션 생성기</h2>
-    
-    <div class="info-box">
-      <strong>💧 워터마크 자동 적용 버전</strong><br>
-      • 총 8개 마크: 모서리 4개 + 가격표 내부 3개 + 하단 스티커 1개<br>
-      • 4가지 색상 자동 순환: 금색 → 청록 → 보라 → 빨강<br>
-      • 나 잘했죠?? ㅋㅋㅋㅋㅋㅋ
-    </div>
-    
-    <div class="section">
-      <h3>📝 가격표 텍스트 입력</h3>
-      <textarea id="priceText" placeholder="여기에 가격표 텍스트를 입력하세요...
+  <!-- 탭 네비게이션 -->
+  <div class="tab-navigation">
+    <button class="tab-btn active" onclick="switchTab('tab1')">
+      🎬 WebP 애니메이션 생성기
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab2')">
+      🛡️ 가격표 복사방지 변환기
+    </button>
+  </div>
+
+  <!-- 탭1: WebP 생성기 -->
+  <div id="tab1" class="tab-content active">
+    <div class="container">
+      <h2>🦇 THE BLACK SHOP - WebP 애니메이션 생성기</h2>
+
+      <div class="info-box">
+        <strong>💧 워터마크 자동 적용 버전</strong><br>
+        • 총 8개 마크: 모서리 4개 + 가격표 내부 3개 + 하단 스티커 1개<br>
+        • 4가지 색상 자동 순환: 금색 → 청록 → 보라 → 빨강<br>
+        • 나 잘했죠?? ㅋㅋㅋㅋㅋㅋ
+      </div>
+
+      <div class="section">
+        <h3>📝 가격표 텍스트 입력</h3>
+        <textarea id="priceText" placeholder="여기에 가격표 텍스트를 입력하세요...
 
 예시:
 ⚔️ 시즌10 버스 서비스
@@ -461,46 +605,99 @@
 🎯 던전 대리
 - 나이트메어: 30,000원/시간
 "></textarea>
-      <button id="generateBtn" onclick="startGeneration()">🎨 WebP 애니메이션 생성</button>
-    </div>
-
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-fill" id="progressFill">0%</div>
-    </div>
-
-    <div id="message"></div>
-    
-    <div class="result-box" id="resultBox">
-      <h4>✅ 생성 완료!</h4>
-      
-      <div class="preview-container">
-        <h5 style="color: #ffd700;">📋 HTML 코드 (복사해서 사용하세요)</h5>
-        <textarea id="previewHtmlCode" readonly style="width:100%; height:150px; background:#1a1a1a; color:#0f0; border:2px solid #00ffd5; border-radius:8px; padding:15px; font-family:monospace; font-size:13px; margin-bottom:15px; resize:vertical;"></textarea>
-        <button class="copy-btn" onclick="copyHtmlCode()">📋 HTML 코드 복사</button>
-        
-        <hr style="border:1px solid #333; margin:25px 0;">
-        
-        <h5 style="color: #ffd700;">🎬 WebP 애니메이션 미리보기</h5>
-        <img id="webpPreview" src="" alt="WebP 미리보기" />
-        <br>
-        <p style="color: #aaa; font-size: 14px;">💫 https://open.kakao.com/o/gUVp9cwh 여기가 진짜 더블랙샵 입니다</p>
-        <button class="copy-btn" onclick="🔗 URL 복사</button>
-        <button class="copy-btn" onclick="downloadImage()">💾 다운로드</button>
+        <button id="generateBtn" onclick="startGeneration()">🎨 WebP 애니메이션 생성</button>
       </div>
+
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill">0%</div>
+      </div>
+
+      <div id="message"></div>
+
+      <div class="result-box" id="resultBox">
+        <h4>✅ 생성 완료!</h4>
+
+        <div class="preview-container">
+          <h5 style="color: #ffd700;">📋 HTML 코드 (복사해서 사용하세요)</h5>
+          <textarea id="previewHtmlCode" readonly style="width:100%; height:150px; background:#1a1a1a; color:#0f0; border:2px solid #00ffd5; border-radius:8px; padding:15px; font-family:monospace; font-size:13px; margin-bottom:15px; resize:vertical;"></textarea>
+          <button class="copy-btn" onclick="copyHtmlCode()">📋 HTML 코드 복사</button>
+
+          <hr style="border:1px solid #333; margin:25px 0;">
+
+          <h5 style="color: #ffd700;">🎬 WebP 애니메이션 미리보기</h5>
+          <img id="webpPreview" src="" alt="WebP 미리보기" />
+          <br>
+          <p style="color: #aaa; font-size: 14px;">💫 https://open.kakao.com/o/gUVp9cwh 여기가 진짜 더블랙샵 입니다</p>
+          <button class="copy-btn" onclick="copyUrl()">🔗 URL 복사</button>
+          <button class="copy-btn" onclick="downloadImage()">💾 다운로드</button>
+        </div>
+      </div>
+
+      <div id="debugLog"></div>
     </div>
 
-    <div id="debugLog"></div>
+    <div id="hiddenRender"></div>
   </div>
 
-  <div id="hiddenRender"></div>
+  <!-- 탭2: 가격표 변환기 -->
+  <div id="tab2" class="tab-content">
+    <div class="container">
+      <h1>디아4 가격표 복사방지 변환기</h1>
+
+      <div class="section">
+        <h2>원본 입력</h2>
+        <textarea id="input" placeholder="가격표 붙여넣기" style="min-height: 400px;"></textarea>
+      </div>
+
+      <div class="section">
+        <label>
+          복잡도:
+          <input type="number" id="fakeIntensity" value="5" min="1" max="10">
+        </label>
+      </div>
+
+      <button onclick="convert()">변환하기</button>
+
+      <div class="section">
+        <h2>HTML 코드</h2>
+        <textarea id="output" readonly style="min-height: 400px;"></textarea>
+        <button class="copy-btn" onclick="copyCode()" style="width: 100%;">복사하기</button>
+      </div>
+
+      <div class="section">
+        <h2>미리보기</h2>
+        <div class="preview-box" id="preview">결과가 여기에 표시됩니다</div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // ============================================
+    // 탭 전환 기능
+    // ============================================
+    function switchTab(tabId) {
+      // 모든 탭 비활성화
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // 선택한 탭 활성화
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // ============================================
+    // 탭1: WebP 생성기 JavaScript
+    // ============================================
     const API_URL = '/api/create-webp';
-    
+
     const supabaseUrl = "https://ssnmitgehgzzcpmqwhzt.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzbm1pdGdlaGd6emNwbXF3aHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjI1MDgsImV4cCI6MjA2ODkzODUwOH0.u3FrSDh5qYeccQmn0PkOs4nfqIhXLSFHhpWj2JXhTrA";
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    
+
     const chatUrl = "https://open.kakao.com/o/gUVp9cwh";
     let webpUrl = "";
 
@@ -526,15 +723,11 @@
       document.getElementById('progressBar').classList.add('show');
     }
 
-    // ============================================
-    // 💧 워터마크 HTML 생성 함수 (자동)
-    // ⚠️ 이 함수는 수정하지 마세요!
-    // ============================================
     function getWatermarkHTML() {
       return `
         <!-- 4개 모서리 배지 -->
 
-        
+
         <!-- 가격표 내부 대각선 워터마크 3개 -->
         <div class="content-watermark wm-diagonal-1">https://open.kakao.com/o/gUVp9cwh ✓</div>
         <div class="content-watermark wm-diagonal-2">https://open.kakao.com/o/gUVp9cwh ✓</div>
@@ -547,26 +740,22 @@
       `;
     }
 
-    // 오픈채팅 자동 삽입 기능 제거 (해시태그로 대체)
     function insertChatLinks(text, chatUrl) {
       const escapeHTML = (s) => s.replace(/[&<>"']/g, m => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
       }[m]));
-      
-      // 단순히 HTML 이스케이프만 수행
+
       return escapeHTML(text);
     }
 
-    // 보호 기능이 포함된 HTML 코드 생성 함수
     function generateProtectedHtml(imageUrl) {
       return `<a href="https://open.kakao.com/o/gUVp9cwh" target="_blank" rel="noopener noreferrer" style="display:block; max-width:100%; margin:0 auto 20px auto; text-decoration:none;">
-    <img src="${imageUrl}" 
+    <img src="${imageUrl}"
          alt="오픈카톡 연결" style="cursor:pointer; max-width:100%; height:auto; border-radius:12px; display:block; margin:0 auto; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; -webkit-user-drag:none; -khtml-user-drag:none; -moz-user-drag:none; -o-user-drag:none; user-drag:none; pointer-events:none;" draggable="false">
 
 </a>`;
     }
 
-    // HTML 코드 복사 함수
     function copyHtmlCode() {
       const codeTextarea = document.getElementById('previewHtmlCode');
       codeTextarea.select();
@@ -574,9 +763,6 @@
       alert('✅ HTML 코드가 복사되었습니다!\n\n게시글에 붙여넣기 하세요.');
     }
 
-    // ============================================
-    // 🎨 디자인 HTML 생성 함수 (자유롭게 수정!)
-    // ============================================
     function getDesignHTML(priceHtml) {
       return `
         <div class="header-static">
@@ -587,21 +773,21 @@
             <span class="icon">🦇</span> THE BLACK SHOP <span class="icon">🧛‍♂️</span>
           </h1>
           <div class="shop-tagline">디아블로4 시즌10 버스 · 대리 · 아이템 전문 거래소</div>
-          
+
           <ul class="shop-features">
             <li><span class="icon">🦾</span> 모든 장비, 아이템, 재료 완비</li>
             <li><span class="icon">🚌</span> 버스, 대리, 세팅 풀 지원</li>
             <li><span class="icon">🦸‍♂️</span> 경험 많은 전문 기사 상시 대기</li>
             <li><span class="icon">🔥</span> 합리적인 실시간 최저가 보장</li>
           </ul>
-          
+
           <div class="cta-btn">
             💬 오픈채팅은 가격표 클릭!
           </div>
         </div>
-        
+
         <hr class="divider">
-        
+
         <div class="price-content">
           <h2 class="price-title">💰 실시간 가격표</h2>
           <div class="price-text">${priceHtml}</div>
@@ -619,7 +805,7 @@
       log('=== WebP 애니메이션 생성 시작 ===');
       document.getElementById('generateBtn').disabled = true;
       document.getElementById('resultBox').classList.remove('show');
-      
+
       try {
         updateProgress(10, 'DB 저장 중...');
         const { error } = await supabase
@@ -631,17 +817,17 @@
 
         updateProgress(20, '4개 프레임 렌더링 중...');
         showMessage('WebP 애니메이션 생성 중... 10~20초 소요됩니다!', 'info');
-        
+
         const frames = await generateAllFrames(text);
-        
+
         updateProgress(70, 'Vercel API로 WebP 생성 중...');
         log('Vercel API 호출');
-        
+
         const webpDataUrl = await createWebPViaAPI(frames);
-        
+
         updateProgress(90, 'Supabase 업로드 중...');
         await uploadWebPToSupabase(webpDataUrl);
-        
+
         updateProgress(100, '완료!');
         showMessage('✅ WebP 애니메이션 생성 완료!', 'success');
         document.getElementById('resultBox').classList.add('show');
@@ -658,24 +844,23 @@
     async function generateAllFrames(priceText) {
       const frames = [];
       const priceHtml = insertChatLinks(priceText, chatUrl);
-      
+
       for (let i = 1; i <= 4; i++) {
         log(`프레임 ${i} 렌더링 중...`);
         updateProgress(20 + (i * 10), `프레임 ${i}/4 렌더링 중...`);
-        
-        // 워터마크 + 디자인 자동 합성
+
         const frameHtml = `
           <div class="watermark-container price-image frame-${i}">
             ${getWatermarkHTML()}
             ${getDesignHTML(priceHtml)}
           </div>
         `;
-        
+
         const container = document.getElementById('hiddenRender');
         container.innerHTML = frameHtml;
-        
+
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         const target = container.querySelector('.watermark-container');
         const canvas = await html2canvas(target, {
           useCORS: true,
@@ -685,17 +870,17 @@
           logging: false,
           width: 720
         });
-        
+
         frames.push(canvas.toDataURL('image/jpeg', 0.9));
         log(`프레임 ${i} 캡처 완료`);
       }
-      
+
       return frames;
     }
 
     async function createWebPViaAPI(frames) {
       log('Vercel API 요청 시작');
-      
+
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -709,7 +894,7 @@
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || 'WebP 생성 실패');
       }
@@ -720,7 +905,7 @@
 
     async function uploadWebPToSupabase(dataUrl) {
       log('Supabase 업로드 시작');
-      
+
       const blob = await (await fetch(dataUrl)).blob();
       await supabase.storage.from("changong-images").remove(['theblack_animated.webp']);
 
@@ -739,11 +924,9 @@
         .getPublicUrl('theblack_animated.webp').data.publicUrl;
 
       log(`업로드 완료: ${webpUrl}`);
-      
-      // 미리보기 이미지 표시
+
       document.getElementById('webpPreview').src = webpUrl + '?t=' + Date.now();
-      
-      // HTML 코드 생성 및 표시
+
       const resultCodeValue = generateProtectedHtml(webpUrl);
       document.getElementById("previewHtmlCode").value = resultCodeValue;
       log("HTML 코드 생성 완료");
@@ -760,6 +943,280 @@
       a.download = 'theblack_animated.webp';
       a.click();
     }
+
+    // ============================================
+    // 탭2: 가격표 변환기 JavaScript
+    // ============================================
+    function generateRandomClass() {
+      const chars = 'abcdefghijklmnopqrstuvwxyz';
+      let result = '';
+      for (let i = 0; i < 8; i++) {
+        result += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return result;
+    }
+
+    function generateFakePrices(realPrice, count) {
+      const prices = [];
+      const base = parseInt(realPrice.replace(/,/g, ''));
+
+      for (let i = 0; i < count; i++) {
+        const variance = (Math.random() - 0.5) * base * 0.8;
+        let fake = Math.round((base + variance) / 1000) * 1000;
+        if (fake < 1000) fake = 1000;
+        prices.push(fake.toLocaleString());
+      }
+
+      return prices;
+    }
+
+    function generateFakeQuantities(realQty, count) {
+      const quantities = [];
+      const base = parseInt(realQty.replace(/,/g, ''));
+
+      for (let i = 0; i < count; i++) {
+        const variance = (Math.random() - 0.5) * base * 1.2;
+        let fake = Math.round((base + variance) / 100) * 100;
+        if (fake < 100) fake = 100;
+        quantities.push(fake.toLocaleString());
+      }
+
+      return quantities;
+    }
+
+    function generateFakeItemNames(realName) {
+      const variations = [];
+
+      const similar = {
+        '미지수정': ['미지의수정', '미지 수정', '수정', '미지', '미지결정', '미지석', '신비수정', '수정석'],
+        '잊힌영혼': ['잊혀진영혼', '잊영혼', '영혼', '잊힌령', '잊혼', '망각영혼', '영혼석', '잊힌 영혼'],
+        '골드': ['Gold', '골', '금화', 'G', '금', '재화', 'gold'],
+        '껍데기': ['껍질', '외피', '껍', '데기', '갑피', '외각', '껍 데기'],
+        '옵두': ['옵션두루마리', '옵션 두루마리', '옵', '두루마리', '옵션', '두루', '옵션스크롤'],
+        '정복자': ['정복', '정복가', '컨커러', '정 복자', 'Conqueror', '정복자렙', '정복렙'],
+        '문양': ['문', '양', '글리프', 'Glyph', '문 양', '각인'],
+        '시즌': ['Season', '시 즌', 'S', '시즌2', '시즌3'],
+        '영원': ['Eternal', '영 원', '영구', '이터널'],
+        '고통파편': ['고통 파편', '고통', '파편', '고통의파편', '파편(고통)', '고통조각'],
+        '바늘인형': ['바늘 인형', '바늘', '인형', '침인형', '바늘형', '인형(바늘)'],
+        '악의심장': ['악의 심장', '악의', '심장', '악마심장', '심장(악의)', '악의심'],
+        '정제공포': ['정제 공포', '정제', '공포', '공포정제', '공포석', '정제된공포'],
+        '극상의피': ['극상의 피', '극상', '피', '최상의피', '피(극상)', '극상피'],
+        '강철': ['Steel', '강', '철', '강 철', '스틸'],
+        '룬': ['Rune', '룬석', '각인석', '부적'],
+        '샤코': ['Shaco', '샤 코', '샤', '코', '샤코템'],
+        '영벌': ['영원한벌', '영원벌', '영 벌', '벌'],
+        '별반': ['별의반지', '별 반지', '별반지', '반지'],
+        '수의': ['수 의', '수'],
+        '한아비': ['한 아비', '한', '아비'],
+        '궤멸자': ['궤멸', '궤 멸자', '궤멸템'],
+        '웅장한보석': ['웅장한 보석', '웅장보석', '보석', '웅장석', '보석(웅장)', 'Grand Gem'],
+        '반짝이는벼락불': ['반짝이는 벼락불', '벼락불', '반짝벼락', '번개불', '벼락'],
+        '우버': ['Uber', '우 버', '유버', '최종보스'],
+        '혼돈템': ['혼돈 템', '혼돈', '카오스템', '혼돈장비', '혼돈아이템'],
+        '벨리알': ['Belial', '벨리', '벨 리알'],
+        '릴리트': ['Lilith', '릴 리트', '릴리'],
+        '나락': ['Pit', '나 락', '구덩이', '지하'],
+        '고행': ['Torment', '고 행', '토먼트', '고난'],
+        '명망': ['Renown', '명 망', '명성', '평판'],
+        '캠페인': ['Campaign', '캠페', '스토리', '캠 페인'],
+        '증오의그릇': ['증오의 그릇', '증오그릇', '그릇', '증오'],
+        '지옥불군세': ['지옥불 군세', '지옥군세', '군세', '지옥불', '헬타이드'],
+        '야만': ['야만용사', '바바', 'Barb', '야만인', '야 만'],
+        '강령': ['강령술사', '네크로', 'Necro', '강령사', '강 령'],
+        '드루': ['드루이드', 'Druid', '드루드', '드 루'],
+        '원소': ['원소술사', '소서', 'Sorc', '원소사', '원 소'],
+        '도적': ['Rogue', '로그', '도 적', '로그'],
+        '혼령': ['혼령사', 'Spirit', '스피릿', '혼 령'],
+      };
+
+      for (let key in similar) {
+        if (realName.includes(key)) {
+          variations.push(...similar[key]);
+        }
+      }
+
+      if (!realName.includes(' ')) {
+        for (let i = 1; i < realName.length; i++) {
+          variations.push(realName.substring(0, i) + ' ' + realName.substring(i));
+        }
+      } else {
+        variations.push(realName.replace(/\s/g, ''));
+      }
+
+      if (realName.length > 3) {
+        variations.push(realName.substring(0, realName.length - 1));
+        variations.push(realName.substring(1));
+        variations.push(realName.substring(0, Math.floor(realName.length / 2)));
+        variations.push(realName.substring(Math.ceil(realName.length / 2)));
+      }
+
+      variations.push(realName + '!');
+      variations.push(realName + '★');
+      variations.push('◆' + realName);
+
+      if (/[a-zA-Z]/.test(realName)) {
+        variations.push(realName.toLowerCase());
+        variations.push(realName.toUpperCase());
+      }
+
+      variations.push(realName + '1');
+      variations.push(realName + 'x');
+
+      const unique = [...new Set(variations)].filter(v => v && v.trim() && v !== realName);
+
+      return unique.slice(0, 8);
+    }
+
+    function getRandomHideStyle() {
+      return 'COMMENT';
+    }
+
+    function convert() {
+      const input = document.getElementById('input').value;
+      const kakaoLink = 'https://open.kakao.com/o/gUVp9cwh';
+      const fakeIntensity = parseInt(document.getElementById('fakeIntensity').value) || 5;
+
+      if (!input.trim()) {
+        alert('가격표를 입력하세요!');
+        return;
+      }
+
+      const lines = input.split('\n');
+
+      let html = '<div style="text-align:center;line-height:1.5;margin:0;padding:0;">';
+
+      for (let i = 0; i < fakeIntensity * 3; i++) {
+        html += `<a href="${kakaoLink}" style="display:none;">.</a>`;
+      }
+
+      html += `<div style="border:none;padding:0;margin:0;">`;
+      html += `<div style="font-size:28px;font-weight:bold;color:#d4a017;margin-bottom:5px;">🦇 THE BLACK SHOP 🧛‍♂️</div>`;
+      html += `<div style="font-size:18px;color:#333;margin-bottom:10px;">디아블로4 시즌10 버스 · 대리 · 아이템 전문 거래소</div>`;
+      html += `<div style="font-size:16px;color:#444;line-height:1.8;">🦾 모든 장비, 아이템, 재료 완비</div>`;
+      html += `<div style="font-size:16px;color:#444;line-height:1.8;">🚌 버스, 대리, 세팅 풀 지원</div>`;
+      html += `<div style="font-size:16px;color:#444;line-height:1.8;">🦸‍♂️ 경험 많은 전문 기사 상시 대기</div>`;
+      html += `<div style="font-size:16px;color:#444;line-height:1.8;">🔥 합리적인 실시간 최저가 보장</div>`;
+      html += `<div style="font-size:18px;font-weight:bold;color:#0099cc;margin:10px 0 5px 0;">💬 오픈채팅은 가격표 클릭!</div>`;
+
+      for (let i = fakeIntensity * 3; i < fakeIntensity * 5; i++) {
+        html += `<a href="${kakaoLink}" style="display:none;">.</a>`;
+      }
+
+      html += `<a href="${kakaoLink}" target="_blank" style="color:#666;margin:5px 0;font-size:14px;">━━━━━━━━━━━━━━━━━━━</a>`;
+      html += `</div>`;
+
+      for (let i = fakeIntensity * 5; i < fakeIntensity * 6; i++) {
+        html += `<a href="${kakaoLink}" style="display:none;">.</a>`;
+      }
+
+      html += `<div style="font-size:24px;font-weight:bold;color:#00aa66;margin:10px 0 5px 0;">💰 실시간 가격표</div>`;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim().startsWith('＊') || line.trim().startsWith('*')) {
+          html += `<div style="margin-top:15px;"></div>`;
+          for (let k = 0; k < 3; k++) {
+            html += `<a href="${kakaoLink}" style="display:none;">.</a>`;
+          }
+          html += `<a href="${kakaoLink}" target="_blank" style="color:#999;margin:8px 0;">open.kakao.com/o/gUVp9cwh</a>`;
+          for (let k = 3; k < 6; k++) {
+            html += `<a href="${kakaoLink}" style="display:none;">.</a>`;
+          }
+          html += `<div style="margin-bottom:15px;"></div>`;
+          continue;
+        }
+
+        let fakeSpans = '';
+
+        const priceMatch = line.match(/(\d{1,3}(,\d{3})*)\s*원/g);
+        const qtyMatch = line.match(/(\d{1,3}(,\d{3})*)\s*(개|억|만개|set)/g);
+
+        if (priceMatch) {
+          priceMatch.forEach(price => {
+            const fakes = generateFakePrices(price.replace('원', ''), fakeIntensity);
+            fakes.forEach(fake => {
+              const fakeLine = line.replace(price, fake + '원');
+              fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${fakeLine}</span>`;
+            });
+          });
+        }
+
+        if (qtyMatch) {
+          qtyMatch.forEach(qty => {
+            const unit = qty.match(/(개|억|만개|set)/)[0];
+            const fakes = generateFakeQuantities(qty.replace(unit, ''), Math.ceil(fakeIntensity / 2));
+            fakes.forEach(fake => {
+              const fakeLine = line.replace(qty, fake + unit);
+              fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${fakeLine}</span>`;
+            });
+          });
+        }
+
+        const noEmoji = line.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/--/g, '').trim();
+
+        if (line.includes('=')) {
+          const parts = line.split('=');
+          const leftPart = parts[0].replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/--/g, '').trim();
+          const itemNames = leftPart.split(/\s+/).filter(word => word.length > 1);
+
+          itemNames.forEach(itemName => {
+            const fakeNames = generateFakeItemNames(itemName);
+            fakeNames.forEach(fakeName => {
+              if (fakeName && fakeName !== itemName) {
+                const fakeLine = line.replace(itemName, fakeName);
+                fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${fakeLine}</span>`;
+              }
+            });
+          });
+        } else {
+          if (noEmoji.length > 2) {
+            const words = noEmoji.split(/\s+/).filter(word => word.length > 1);
+            words.forEach(word => {
+              const fakeNames = generateFakeItemNames(word);
+              fakeNames.forEach(fakeName => {
+                if (fakeName && fakeName !== word) {
+                  const fakeLine = line.replace(word, fakeName);
+                  fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${fakeLine}</span>`;
+                }
+              });
+            });
+          }
+        }
+
+        if (line.includes('=')) {
+          const parts = line.split('=');
+          if (parts.length === 2) {
+            const reversed = `${parts[1].trim()} = ${parts[0].trim()}`;
+            fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${reversed}</span>`;
+          }
+        }
+
+        for (let j = 0; j < Math.ceil(fakeIntensity / 3); j++) {
+          const noise = line.split('').sort(() => Math.random() - 0.5).join('');
+          fakeSpans += `<span style="position:absolute;color:transparent;font-size:0.1px;">${noise}</span>`;
+        }
+
+        html += `<div style="position:relative;display:block;margin-bottom:3px;">${line}${fakeSpans}</div>`;
+      }
+
+      html += '</div>';
+
+      document.getElementById('preview').innerHTML = html;
+      document.getElementById('output').value = html;
+    }
+
+    function copyCode() {
+      const output = document.getElementById('output');
+      output.select();
+      document.execCommand('copy');
+      alert('복사 완료!');
+    }
+
+    window.onload = function() {
+      document.getElementById('input').value = '';
+    };
   </script>
 </body>
 </html>
