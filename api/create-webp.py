@@ -32,18 +32,28 @@ class handler(BaseHTTPRequestHandler):
                     img = img.convert('RGB')
                 frames.append(img)
 
-            # WebP 애니메이션 생성
+            if not frames:
+                raise ValueError('No frames provided')
+
             output = BytesIO()
-            frames[0].save(
-                output,
-                format='WEBP',
-                save_all=True,
-                append_images=frames[1:],
-                duration=800,  # 0.8초
-                loop=0,  # 무한 반복
-                quality=85,
-                method=6
-            )
+            if len(frames) == 1:
+                frames[0].save(
+                    output,
+                    format='WEBP',
+                    quality=85,
+                    method=6
+                )
+            else:
+                frames[0].save(
+                    output,
+                    format='WEBP',
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=800,
+                    loop=0,
+                    quality=85,
+                    method=6
+                )
 
             # base64로 인코딩
             output.seek(0)
