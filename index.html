@@ -566,7 +566,6 @@
       margin-left: 10px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -700,10 +699,9 @@
     // 탭1: WebP 생성기 JavaScript
     // ============================================
     const API_URL = '/api/create-webp';
-
-    const supabaseUrl = "https://ssnmitgehgzzcpmqwhzt.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzbm1pdGdlaGd6emNwbXF3aHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjI1MDgsImV4cCI6MjA2ODkzODUwOH0.u3FrSDh5qYeccQmn0PkOs4nfqIhXLSFHhpWj2JXhTrA";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const R2_UPLOAD_WORKER_URL = 'https://theblack-r2-upload.madebychangong.workers.dev/upload';
+    const R2_UPLOAD_TOKEN = '5181016';
+    const WEBP_FILENAME = 'theblack_animated.webp';
 
     const chatUrl = "https://open.kakao.com/o/gUVp9cwh";
     let webpUrl = "";
@@ -815,16 +813,11 @@
       document.getElementById('resultBox').classList.remove('show');
 
       try {
-        updateProgress(10, 'DB 저장 중...');
-        const { error } = await supabase
-          .from("user_texts")
-          .upsert({ user_id: "theblack04", main_text: text }, { onConflict: "user_id" });
+        updateProgress(10, 'Preparing...');
+        log('Text input verified');
 
-        if (error) throw error;
-        log('텍스트 저장 완료');
-
-        updateProgress(20, '4개 프레임 렌더링 중...');
-        showMessage('WebP 애니메이션 생성 중... 10~20초 소요됩니다!', 'info');
+        updateProgress(20, 'Rendering 4 frames...');
+        showMessage('WebP animation is being generated. This may take 10-20 seconds.', 'info');
 
         const frames = await generateAllFrames(text);
 
@@ -833,8 +826,8 @@
 
         const webpDataUrl = await createWebPViaAPI(frames);
 
-        updateProgress(90, 'Supabase 업로드 중...');
-        await uploadWebPToSupabase(webpDataUrl);
+        updateProgress(90, 'Uploading to Cloudflare R2...');
+        await uploadWebPToR2(webpDataUrl);
 
         updateProgress(100, '완료!');
         showMessage('✅ WebP 애니메이션 생성 완료!', 'success');
@@ -912,33 +905,35 @@
       return result.webp;
     }
 
-    async function uploadWebPToSupabase(dataUrl) {
-      log('Supabase 업로드 시작');
+    async function uploadWebPToR2(dataUrl) {
+      log('Cloudflare R2 upload start');
 
       const blob = await (await fetch(dataUrl)).blob();
-      await supabase.storage.from("changong-images").remove(['theblack_animated.webp']);
+      const response = await fetch(R2_UPLOAD_WORKER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'image/webp',
+          'Cache-Control': 'public, no-cache',
+          'X-Upload-Token': R2_UPLOAD_TOKEN,
+        },
+        body: blob,
+      });
 
-      const { error } = await supabase.storage
-        .from("changong-images")
-        .upload('theblack_animated.webp', blob, {
-          contentType: 'image/webp',
-          cacheControl: "3600",
-          upsert: true,
-        });
+      const result = await response.json().catch(() => null);
 
-      if (error) throw error;
+      if (!response.ok || !result || !result.success) {
+        throw new Error((result && result.error) || `R2 upload failed: ${response.status}`);
+      }
 
-      webpUrl = supabase.storage
-        .from("changong-images")
-        .getPublicUrl('theblack_animated.webp').data.publicUrl;
+      webpUrl = result.publicUrl;
 
-      log(`업로드 완료: ${webpUrl}`);
+      log(`Upload complete: ${webpUrl}`);
 
       document.getElementById('webpPreview').src = webpUrl + '?t=' + Date.now();
 
       const resultCodeValue = generateProtectedHtml(webpUrl);
       document.getElementById("previewHtmlCode").value = resultCodeValue;
-      log("HTML 코드 생성 완료");
+      log("HTML code generated");
     }
 
     function copyUrl() {
@@ -949,7 +944,7 @@
     function downloadImage() {
       const a = document.createElement('a');
       a.href = webpUrl;
-      a.download = 'theblack_animated.webp';
+      a.download = WEBP_FILENAME;
       a.click();
     }
 
