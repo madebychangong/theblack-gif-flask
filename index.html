@@ -620,7 +620,7 @@
 
       <div id="message"></div>
 
-      <div class="result-box" id="resultBox">
+      <div class="result-box show" id="resultBox">
         <h4>✅ 생성 완료!</h4>
 
         <div class="preview-container">
@@ -702,9 +702,10 @@
     const R2_UPLOAD_WORKER_URL = 'https://theblack-r2-upload.madebychangong.workers.dev/upload';
     const R2_UPLOAD_TOKEN = '5181016';
     const WEBP_FILENAME = 'theblack_animated.webp';
+    const R2_PUBLIC_WEBP_URL = 'https://pub-83c811902c254ec3a06e730d4b86de9c.r2.dev/theblack_animated.webp';
 
     const chatUrl = "https://open.kakao.com/o/gUVp9cwh";
-    let webpUrl = "";
+    let webpUrl = R2_PUBLIC_WEBP_URL;
 
     function log(message) {
       const debugLog = document.getElementById('debugLog');
@@ -761,6 +762,14 @@
 </a>`;
     }
 
+    function initializeResultHtml() {
+      webpUrl = R2_PUBLIC_WEBP_URL;
+      document.getElementById('previewHtmlCode').value = generateProtectedHtml(webpUrl);
+      document.getElementById('webpPreview').src = webpUrl;
+      document.getElementById('resultBox').classList.add('show');
+    }
+
+
     function copyHtmlCode() {
       const codeTextarea = document.getElementById('previewHtmlCode');
       codeTextarea.select();
@@ -810,16 +819,22 @@
 
       log('=== WebP 애니메이션 생성 시작 ===');
       document.getElementById('generateBtn').disabled = true;
-      document.getElementById('resultBox').classList.remove('show');
+      document.getElementById('resultBox').classList.add('show');
 
       try {
         updateProgress(10, 'Preparing...');
         log('Text input verified');
 
-        updateProgress(20, 'Rendering 4 frames...');
-        showMessage('WebP animation is being generated. This may take 10-20 seconds.', 'info');
+        const includeWatermark = document.getElementById('includeWatermark').checked;
+        updateProgress(20, includeWatermark ? 'Rendering 4 frames...' : 'Rendering static image...');
+        showMessage(
+          includeWatermark
+            ? 'WebP animation is being generated. This may take 10-20 seconds.'
+            : 'Static WebP image is being generated. Please wait a moment.',
+          'info'
+        );
 
-        const frames = await generateAllFrames(text);
+        const frames = await generateAllFrames(text, includeWatermark);
 
         updateProgress(70, 'Vercel API로 WebP 생성 중...');
         log('Vercel API 호출');
@@ -830,7 +845,7 @@
         await uploadWebPToR2(webpDataUrl);
 
         updateProgress(100, '완료!');
-        showMessage('✅ WebP 애니메이션 생성 완료!', 'success');
+        showMessage('? WebP ?? ??!', 'success');
         document.getElementById('resultBox').classList.add('show');
         log('=== 작업 완료 ===');
 
@@ -842,14 +857,14 @@
       }
     }
 
-    async function generateAllFrames(priceText) {
+    async function generateAllFrames(priceText, includeWatermark) {
       const frames = [];
       const priceHtml = insertChatLinks(priceText, chatUrl);
-      const includeWatermark = document.getElementById('includeWatermark').checked;
+      const totalFrames = includeWatermark ? 4 : 1;
 
-      for (let i = 1; i <= 4; i++) {
-        log(`프레임 ${i} 렌더링 중...`);
-        updateProgress(20 + (i * 10), `프레임 ${i}/4 렌더링 중...`);
+      for (let i = 1; i <= totalFrames; i++) {
+        log(`Frame ${i} rendering...`);
+        updateProgress(20 + (i * (40 / totalFrames)), `Frame ${i}/${totalFrames} rendering...`);
 
         const frameHtml = `
           <div class="watermark-container price-image frame-${i}">
@@ -874,7 +889,7 @@
         });
 
         frames.push(canvas.toDataURL('image/jpeg', 0.9));
-        log(`프레임 ${i} 캡처 완료`);
+        log(`Frame ${i} captured`);
       }
 
       return frames;
@@ -1220,6 +1235,7 @@
 
     window.onload = function() {
       document.getElementById('input').value = '';
+      initializeResultHtml();
     };
   </script>
 </body>
